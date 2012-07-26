@@ -1,0 +1,432 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>742</width>
+    <height>685</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="1" column="0">
+     <widget class="QGroupBox" name="group0">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="MinimumExpanding" vsizetype="Maximum">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>150</width>
+        <height>100</height>
+       </size>
+      </property>
+      <property name="title">
+       <string>Data</string>
+      </property>
+      <widget class="QLineEdit" name="t1">
+       <property name="geometry">
+        <rect>
+         <x>210</x>
+         <y>20</y>
+         <width>81</width>
+         <height>26</height>
+        </rect>
+       </property>
+       <property name="statusTip">
+        <string>start day to add data</string>
+       </property>
+       <property name="text">
+        <string>2000-01-01</string>
+       </property>
+      </widget>
+      <widget class="QLineEdit" name="t2">
+       <property name="geometry">
+        <rect>
+         <x>180</x>
+         <y>50</y>
+         <width>81</width>
+         <height>26</height>
+        </rect>
+       </property>
+       <property name="statusTip">
+        <string>end day to add data</string>
+       </property>
+       <property name="text">
+        <string>2000-01-03</string>
+       </property>
+      </widget>
+      <widget class="QLineEdit" name="project">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+       <property name="geometry">
+        <rect>
+         <x>20</x>
+         <y>10</y>
+         <width>113</width>
+         <height>26</height>
+        </rect>
+       </property>
+       <property name="statusTip">
+        <string>Data class</string>
+       </property>
+       <property name="text">
+        <string>Parkfield</string>
+       </property>
+      </widget>
+      <widget class="QLineEdit" name="station">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>40</y>
+         <width>71</width>
+         <height>26</height>
+        </rect>
+       </property>
+       <property name="statusTip">
+        <string>station</string>
+       </property>
+       <property name="text">
+        <string>PKD</string>
+       </property>
+      </widget>
+      <widget class="QLineEdit" name="component">
+       <property name="geometry">
+        <rect>
+         <x>90</x>
+         <y>60</y>
+         <width>41</width>
+         <height>26</height>
+        </rect>
+       </property>
+       <property name="statusTip">
+        <string>component</string>
+       </property>
+       <property name="text">
+        <string>Z</string>
+       </property>
+      </widget>
+     </widget>
+    </item>
+    <item row="2" column="0" colspan="3">
+     <widget class="QProgressBar" name="pbar">
+      <property name="value">
+       <number>0</number>
+      </property>
+      <property name="textVisible">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="2">
+     <widget class="QGroupBox" name="group1">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="title">
+       <string>PPSD</string>
+      </property>
+      <widget class="QPushButton" name="button">
+       <property name="geometry">
+        <rect>
+         <x>30</x>
+         <y>20</y>
+         <width>61</width>
+         <height>25</height>
+        </rect>
+       </property>
+       <property name="statusTip">
+        <string>Create new PPSD object / add data to existing PPSD object</string>
+       </property>
+       <property name="layoutDirection">
+        <enum>Qt::RightToLeft</enum>
+       </property>
+       <property name="text">
+        <string>New</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="push_open">
+       <property name="geometry">
+        <rect>
+         <x>220</x>
+         <y>20</y>
+         <width>100</width>
+         <height>25</height>
+        </rect>
+       </property>
+       <property name="statusTip">
+        <string>Open PPSD</string>
+       </property>
+       <property name="text">
+        <string>Open</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="push_save">
+       <property name="geometry">
+        <rect>
+         <x>220</x>
+         <y>60</y>
+         <width>100</width>
+         <height>25</height>
+        </rect>
+       </property>
+       <property name="statusTip">
+        <string>Save PPSD</string>
+       </property>
+       <property name="text">
+        <string>Save</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="push_plot">
+       <property name="geometry">
+        <rect>
+         <x>40</x>
+         <y>60</y>
+         <width>61</width>
+         <height>25</height>
+        </rect>
+       </property>
+       <property name="statusTip">
+        <string>Plot PPSD</string>
+       </property>
+       <property name="layoutDirection">
+        <enum>Qt::RightToLeft</enum>
+       </property>
+       <property name="text">
+        <string>Plot</string>
+       </property>
+      </widget>
+      <widget class="QCheckBox" name="check_plot1">
+       <property name="geometry">
+        <rect>
+         <x>130</x>
+         <y>10</y>
+         <width>21</width>
+         <height>23</height>
+        </rect>
+       </property>
+       <property name="statusTip">
+        <string>show coverage</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+      <widget class="QCheckBox" name="check_plot2">
+       <property name="geometry">
+        <rect>
+         <x>160</x>
+         <y>30</y>
+         <width>21</width>
+         <height>23</height>
+        </rect>
+       </property>
+       <property name="statusTip">
+        <string>show histogram</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+      <widget class="QCheckBox" name="check_plot3">
+       <property name="geometry">
+        <rect>
+         <x>140</x>
+         <y>50</y>
+         <width>21</width>
+         <height>23</height>
+        </rect>
+       </property>
+       <property name="statusTip">
+        <string>show percentiles</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+      <widget class="QCheckBox" name="check_plot4">
+       <property name="geometry">
+        <rect>
+         <x>180</x>
+         <y>60</y>
+         <width>21</width>
+         <height>23</height>
+        </rect>
+       </property>
+       <property name="statusTip">
+        <string>show noise models</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </widget>
+    </item>
+    <item row="0" column="0" colspan="3">
+     <widget class="MPLWidget" name="canv" native="true">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="autoFillBackground">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>742</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuEnable">
+    <property name="title">
+     <string>Menu</string>
+    </property>
+    <addaction name="actionAdd_Console"/>
+    <addaction name="actionStart_IPython"/>
+    <addaction name="actionLogging_to_File"/>
+    <addaction name="actionLogging_Window"/>
+   </widget>
+   <addaction name="menuEnable"/>
+  </widget>
+  <action name="actionAdd_Console">
+   <property name="text">
+    <string>Add Console</string>
+   </property>
+  </action>
+  <action name="actionSave_Data">
+   <property name="text">
+    <string>Save Data</string>
+   </property>
+  </action>
+  <action name="actionLogging_to_File">
+   <property name="text">
+    <string>Logging to File</string>
+   </property>
+  </action>
+  <action name="actionLogging_Window">
+   <property name="text">
+    <string>Logging Window</string>
+   </property>
+  </action>
+  <action name="actionStart_IPython">
+   <property name="text">
+    <string>Start IPython</string>
+   </property>
+  </action>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>MPLWidget</class>
+   <extends>QWidget</extends>
+   <header location="global">widgets</header>
+   <container>1</container>
+   <slots>
+    <slot>frequency_changed()</slot>
+   </slots>
+  </customwidget>
+ </customwidgets>
+ <tabstops>
+  <tabstop>project</tabstop>
+  <tabstop>station</tabstop>
+  <tabstop>component</tabstop>
+  <tabstop>t1</tabstop>
+  <tabstop>t2</tabstop>
+  <tabstop>button</tabstop>
+  <tabstop>push_plot</tabstop>
+  <tabstop>push_open</tabstop>
+  <tabstop>push_save</tabstop>
+  <tabstop>check_plot1</tabstop>
+  <tabstop>check_plot2</tabstop>
+  <tabstop>check_plot3</tabstop>
+  <tabstop>check_plot4</tabstop>
+ </tabstops>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>button</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>project</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>421</x>
+     <y>564</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>106</x>
+     <y>562</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>button</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>station</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>419</x>
+     <y>571</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>74</x>
+     <y>588</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>button</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>component</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>454</x>
+     <y>563</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>118</x>
+     <y>611</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>freq_changed()</slot>
+  <slot>slot1()</slot>
+ </slots>
+</ui>

@@ -1,0 +1,1 @@
+f2py -c -m _pspier pspier.f

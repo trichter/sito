@@ -1,0 +1,41 @@
+sito - Scripts for receiver function analysis and
+       ambient noise cross-correlation - based on ObsPy (http://obspy.org/)
+copyright:
+    2010-2012 Tom Richter (richter@gfz-potsdam.de)
+license:
+    GNU Lesser General Public License, Version 3
+    (http://www.gnu.org/copyleft/lesser.html)
+
+These scripts were written for my work at GFZ Potsdam. They are tested and work
+well with data from the IPOC project I am working on.
+
+Required:
+- python 2.7
+- numpy
+- scipy
+- pylab/matplotlib
+- basemap
+- ipython
+- obspy - developer version
+- seispy
+
+sito consist of the following major modules:
+data - Class for data handling (You can set up your own data calss here)
+events - Class for handling event data (better: use new Catalog class in ObsPy)
+imaging - Customized plotting
+map - Customized station map plotting
+noisexcorr - correlation of noise
+rf - Receiver function calculation
+station - Class for handling station data
+stream - Class derived from obspy.trace.Stream with custom methods
+trace - Class derived from obspy.trace.Trace with custom methods
+util - Utilities like deconvolution, polarisation, rotation, pspier
+       (mainly imported from other projects)
+xcorr - Cross correlation functions
+
+minor modules:
+noise_migration - migrate noise phases in correlations backwards (experimental)
+
+tiny modules:
+debug - ipython debugging functionality
+seismometer - PAZ of STS-2 and Wood-Anderson
