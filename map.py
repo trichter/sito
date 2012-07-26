@@ -198,6 +198,9 @@ def createMap(ll=None, ur=None, figsize=None, margin=None,
         plt.gca().add_collection(b)
         plt.annotate('14 Nov. 2007\n M 7.6', (x2, y2), xytext=(22, 0),
                                      textcoords='offset points', va='center')
+    if earthquake == 'Tocopilla_position':
+        x, y = m(-70.06, -22.34)
+        m.plot((x), (y), 'g*', ms=15, zorder=10) #epicenter
     if elevation:
         vmax, resol, bar = elevation_args
         geo = gdal.Open(elevation)

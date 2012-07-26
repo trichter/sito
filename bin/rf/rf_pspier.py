@@ -44,9 +44,10 @@ def plot_pspier():
         coords = np.array([lat, lon])
         np.save(coordfile, coords)
     from sito import map
-    m = map.createIPOCMap(show=False, trench=None)
+    m = map.createIPOCMap(show=False, trench=None, earthquake='Tocopilla_position')
     x, y = m(coords[1, :], coords[0, :])
     m.plot(x, y, 'xr', ms=3)
+    print(pp_path + 'map_pp%d.pdf' % pspier_depth)
     plt.gcf().savefig(pp_path + 'map_pp%d.pdf' % pspier_depth)
 
 def calculate_profile():
@@ -201,9 +202,9 @@ else:
 
 
 #calculate_pspier(True)
-#plot_pspier()
-calculate_profile()
-plot2()
+plot_pspier()
+#calculate_profile()
+#plot2()
 #plot3()
 
 #plt.show()

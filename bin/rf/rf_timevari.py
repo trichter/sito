@@ -69,8 +69,12 @@ def cosmetic_to_plot(fig, stream):
             if time > utc:
                 return i - 0.5
     fig.axes[0].set_yticklabels(' ' * 200)
+    # mark Tocopilla event with red line and star
+    for ax in fig.axes[:1] + fig.axes[2:4]:
+        ax.axhline(getind(T_TOCO), color='r', lw=1, alpha=0.6)
     fig.axes[3].plot((UTC2year(T_TOCO),), (getind(T_TOCO),), marker=(5, 2, 0), #asterix
                       mec='r', ms=3)
+
 
 def create_symlinks():
     for file_ in glob(TIMEVARI_PATH + 'rf_*_R?.QHD'):
@@ -119,27 +123,31 @@ def plot_selected_rfs():
         plot = ms.plotRF(start, end, fig=fig, component=components[1],
                        figtitle='station component R%s' % reg_num, **kwargs)
         cosmetic_to_plot(plot.fig, ms.select(component=components[0]))
-        ### highlight phases
 
+        ### highlight phases and plot time shift results
         if PLOT_SHIFTS_IN_AXIS and WINDOWS.has_key(stareg) and RESULTS.has_key(stareg):
-            for window in zip(*WINDOWS[stareg]):
+            for i, window in enumerate(sorted(zip(*WINDOWS[stareg]))):
                 r = RESULTS[stareg][window]
                 time_window = r.time
                 _unused_sec, dt_window, _unused_cor, _unused_func = window
                 plot.fig.axes[0].axvspan(time_window - dt_window,
                                          time_window + dt_window,
-                                         facecolor='yellow', alpha=0.3, lw=0.5)
+                                         facecolor=COLORS_PHASES[i],
+                                         alpha=0.3, lw=0.5)
                 plot.fig.axes[1].axvspan(time_window - dt_window,
                                          time_window + dt_window,
-                                         facecolor='yellow', alpha=0.3, lw=0.5)
+                                         facecolor=COLORS_PHASES[i],
+                                         alpha=0.3, lw=0.5)
             if stareg != 'PB06 R1':
                 num_win = len(RESULTS[stareg])
+                fac1 = 1.1
+                fac2 = 1.2
                 if num_win >= 3:
-                    Bbox = matplotlib.transforms.Bbox.from_bounds(0.1 , 0.1, 1.1, 1.0)
+                    Bbox = matplotlib.transforms.Bbox.from_bounds(0. , 0.28, 1.1 * fac1, 1.0 * fac2)
                 elif num_win == 2:
-                    Bbox = matplotlib.transforms.Bbox.from_bounds(0.1 , 0.1, 1.1, 0.7)
+                    Bbox = matplotlib.transforms.Bbox.from_bounds(0. , 0.28, 1.1 * fac1, 0.7 * fac2)
                 else:
-                    Bbox = matplotlib.transforms.Bbox.from_bounds(0.1 , 0.1, 1.1, 0.4)
+                    Bbox = matplotlib.transforms.Bbox.from_bounds(0. , 0.28, 1.1 * fac1, 0.4 * fac2)
                 trans = plot.fig.dpi_scale_trans + plot.fig.transFigure.inverted()
                 shift_ax = plot.fig.add_axes(matplotlib.transforms.TransformedBbox(Bbox, trans).bounds)
 
@@ -363,6 +371,7 @@ def export_shift_results_to_tex_table(just_these=None):
 
 COLORS = 'blue #808000 red'.split()
 COLOR2 = '#800000'
+COLORS_PHASES = 'yellow red blue green'.split()
 SHIFT_TYPE = 'max cor cor_score'.split()
 PLOT_KWARGS = dict(fmt='d', elinewidth=None, capsize=4, ms=4)
 PLOT_KWARGS2 = dict(fmt='d', elinewidth=0., capsize=0, ms=2, lw=1)
@@ -372,7 +381,7 @@ def plot_shifts(ax, stareg, label=None):
     i = 0.
     #N = 3 * len(RESULTS[stareg]) - 1
     windows = RESULTS[stareg]
-    for window in sorted(windows, key=windows.get(0)):
+    for k, window in enumerate(sorted(windows, key=windows.get(0))):
         r = RESULTS[stareg][window]
         time_window = r.time
         #sec, _unused_dt, _unused_cor, func = window
@@ -381,6 +390,7 @@ def plot_shifts(ax, stareg, label=None):
         ax.annotate('%.1fs' % time_window, (0.02, y_pos), color='k',
                      xycoords=('axes fraction', 'data'), fontsize=6, va='top')
         ax.axvline(0, lw=1, color='black', zorder= -1)
+        ax.axhspan(y_pos - 0.05, y_pos + 0.25, alpha=0.3, facecolor=COLORS_PHASES[k], lw=0.5)
         for j, shift_type in enumerate(SHIFT_TYPE):
             stat = getattr(r, 'shift_' + shift_type).stat
             if stat.n1 <= 1 or stat.n2 <= 1:
@@ -394,7 +404,8 @@ def plot_shifts(ax, stareg, label=None):
                          label=None if not label else shift_type,
                          **PLOT_KWARGS2)
             i += 0.1
-    ax.set_ylim((i + 0.2, -0.1))
+    #ax.set_ylim((i + 0.2, -0.1))
+    ax.set_ylim((i - 0.05, -0.05))
     ax.set_xticks(())
     ax.set_yticks(())
     xlims = ax.get_xlim()
@@ -403,10 +414,11 @@ def plot_shifts(ax, stareg, label=None):
     ax.set_xlim([-xlim_max, xlim_max])
     xticks = [-xlim_max * 0.5, xlim_max * 0.5]
     ax.set_xticks(xticks)
-    ax.set_xticklabels([str(xtick) + 's' for xtick in xticks])
+    #ax.set_xticklabels([str(xtick) + 's' for xtick in xticks])
+    ax.set_xlabel('time shift (s)', fontsize=6, labelpad=2)
     for tick in ax.xaxis.get_major_ticks():
         tick.label.set_fontsize(6)
-        tick.set_pad(-10)
+        #tick.set_pad(-10)
     for line in ax.xaxis.get_ticklines():
         line.set_markeredgewidth(1)
         line.set_markersize(4)
@@ -486,9 +498,9 @@ PLOT_SHIFTS_IN_AXIS = True
 #select_rfs_from_region()
 load_shift_results()
 
-#plot_selected_rfs()
-#PLOT_SHIFTS_IN_AXIS = False
-#plot_selected_rfs()
+plot_selected_rfs()
+PLOT_SHIFTS_IN_AXIS = False
+plot_selected_rfs()
 #create_symlinks()
 
 
