@@ -16,6 +16,7 @@ try:
 except ImportError:
     have_ipython = False
 import progressbar #@UnresolvedImport
+from functools import wraps
 
 widgets = [progressbar.Bar('>'), ' ', progressbar.ETA(), ' ', progressbar.ReverseBar('<')]
 progress = progressbar.ProgressBar(widgets=widgets)
@@ -176,6 +177,7 @@ def vectorize_args(nums):
     See numpy.vectorize.
     """
     def wrap(func):
+        @wraps(func)
         def wrapped(*args, ** kwargs):
             args = list(args)
             for i, arg in enumerate(args):

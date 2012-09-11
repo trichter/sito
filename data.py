@@ -147,9 +147,9 @@ class Data(object):
         self.use_client = use_client
         if not client:
             with open('/home/richter/.sito/pwd_seishub') as f:
-                pwd = f.read.strip('\n')
+                pwd = f.read().strip('\n')
             client = Client(base_url='http://sec24c74.gfz-potsdam.de:8080',
-                            user='richter', password=pwd, timeout=50)
+                            user='richter', password=pwd)
             client = client.waveform
         self.client = client
 

@@ -185,7 +185,7 @@ def depth2time(z, phase='Ps', slowness=6.4, model=iasp91):
     return dict([(ph, t_list[phase_dict[ph]]) for ph in phase_list])
 
 @vectorize_args((0,))
-def multiples(mm, mmpers, phase_list=('Ps', 'Pppp', 'Ppps')):
+def multiples(mm, mmpers=1., phase_list=('Ps', 'Pppp', 'Ppps')):
     """
     Return multiples for time of converted S-phase after P-onset.
 

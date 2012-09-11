@@ -276,3 +276,55 @@ def createMap(ll=None, ur=None, figsize=None, margin=None,
     if show:
         plt.show()
     return m
+
+
+
+def plotEvents(catalog, client=None, **kwargs):
+    """
+    IPython must not be started in pylab mode.
+    
+    """
+    def onpress(event):
+        if not event.inaxes or event.key != 'shift':
+            return
+        lon, lat = map(event.xdata, event.ydata, inverse=True)
+        dlon = 0.05
+        dlat = 0.05
+        filter = ('%f < latitude < %f and %f < longitude < %f' %
+                   (lat - dlat, lat + dlat, lon - dlon, lon + dlon))
+        ev = catalog.filter2(filter)
+        if len(ev) == 0:
+            print 'No event picked'
+            return
+        from sito import Stream
+        st = Stream()
+        print 'Selcet', ev
+        for arrival in ev[0].origins[0].arrivals:
+            arrival.pick_id.convertIDToQuakeMLURI()
+            pick = arrival.pick_id.getReferredObject()
+            if not pick:
+                print 'FAIL'
+                return
+            time = pick.time
+            seed_id = pick.waveform_id.getSEEDString()
+            try:
+                st1 = Stream(client.getWaveform(*(seed_id.split('.') + [time - 50, time + 250])))
+            except Exception as ex:
+                print '%s for %s' % (ex, seed_id)
+                continue
+
+            st1.merge()
+            print 'load %s %s %.1f' % (seed_id, pick.phase_hint, time - ev[0].origins[0].time)
+            st1[0].stats['label'] = '%s %s %.1f' % (seed_id, pick.phase_hint, time - ev[0].origins[0].time)
+            st += st1
+        st.setHI('filter', '')
+        st.filter2(2, None)
+        #st.plot(automerge=False, method='fast', type='relative')
+        im = st.plot_()
+        plt.show()
+    if client is None:
+        catalog.plot(**kwargs)
+    else:
+        map, ax = catalog.plot(handle=True, **kwargs)
+        plt.connect('button_press_event', onpress)
+    plt.show()

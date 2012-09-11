@@ -399,6 +399,10 @@ class Stream(ObsPyStream):
         for tr in self:
             tr.downsample2(new_sampling_rate)
 
+    def taper2(self, *args, **kwargs):
+        for tr in self:
+            tr.taper2(*args, **kwargs)
+
     @add_doc(timeNorm)
     def timeNorm(self, *args, **kwargs):
         """
@@ -1476,3 +1480,8 @@ END""" % (start, end, spiking, cut1, cut2)
         hist_list, mag_list = events.produceHist(start, end, period)
         self.setHI('num_events', hist_list)
         self.setHI('max_mag', mag_list)
+
+    def addZeros(self, secs_before, secs_after=None):
+        for tr in self:
+            tr.addZeros(secs_before, secs_after=secs_after)
+

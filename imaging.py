@@ -540,7 +540,7 @@ class Plot(object):
         ### connect, save, show
         #self.fig = fig
         if connect_event and not imshow:
-            fig.canvas.mpl_connect('key_press_event', self._onKey_plot)
+            print fig.canvas.mpl_connect('key_press_event', self._onKey_plot)
         elif connect_event:
             fig.canvas.mpl_connect('key_press_event', self._onKey_imshow)
 #        if tight_layout:

@@ -370,7 +370,10 @@ def export_shift_results_to_tex_table(just_these=None):
 
 
 COLORS = 'blue #808000 red'.split()
+#COLORS3 = 'blue y red grey g #FF7E00 #00FFFF #9966CC'.split()
+COLORS3 = 'blue y red orange g #FFE6CD #CDFFFF #B8A4CC'.split() # saturation = 50 / 255
 COLOR2 = '#800000'
+MARKERS = '. s ^'.split()
 COLORS_PHASES = 'yellow red blue green'.split()
 SHIFT_TYPE = 'max cor cor_score'.split()
 PLOT_KWARGS = dict(fmt='d', elinewidth=None, capsize=4, ms=4)
@@ -387,8 +390,8 @@ def plot_shifts(ax, stareg, label=None):
         #sec, _unused_dt, _unused_cor, func = window
         #color = ['blue', 'red', 'green'][ph_type(func)]
         y_pos = i #1.*(N - i) / N
-        ax.annotate('%.1fs' % time_window, (0.02, y_pos), color='k',
-                     xycoords=('axes fraction', 'data'), fontsize=6, va='top')
+        #ax.annotate('%.1fs' % time_window, (0.02, y_pos), color='k',
+        #             xycoords=('axes fraction', 'data'), fontsize=6, va='top')
         ax.axvline(0, lw=1, color='black', zorder= -1)
         ax.axhspan(y_pos - 0.05, y_pos + 0.25, alpha=0.3, facecolor=COLORS_PHASES[k], lw=0.5)
         for j, shift_type in enumerate(SHIFT_TYPE):
@@ -396,13 +399,16 @@ def plot_shifts(ax, stareg, label=None):
             if stat.n1 <= 1 or stat.n2 <= 1:
                 continue
             # blue, cyan, light blue, green
-            color = COLORS[j]
+            #color = COLORS[j]
+            color = 'k'
+            marker = MARKERS[j]
             #y_pos = 1.*(N - i) / N
             y_pos = i
             ax.errorbar(stat.mean_dif, y_pos, yerr=None, xerr=stat.std_dif,
-                         ecolor=color, mec=color, mfc=color,
-                         label=None if not label else shift_type,
-                         **PLOT_KWARGS2)
+                        marker=marker,
+                        ecolor=color, mec=color, mfc=color,
+                        label=None if not label else shift_type,
+                        **PLOT_KWARGS2)
             i += 0.1
     #ax.set_ylim((i + 0.2, -0.1))
     ax.set_ylim((i - 0.05, -0.05))
@@ -423,7 +429,86 @@ def plot_shifts(ax, stareg, label=None):
         line.set_markeredgewidth(1)
         line.set_markersize(4)
 
-def plot_shift_results():
+def plot_shift_results(linear_regression=True):
+    fig = getFig(ratio=0.618, margin=[1.9, 0.3, 1.3, 0.3])
+    ax = fig.axes[0]
+    assert isinstance(ax, mpl.axes.Axes) #get pydev autocompletion
+    ax.set_xlabel('delay time of analysed phase (s)')
+    ax.set_ylabel('time shift (s)')
+    ax.axhline(0, color='k', lw=1)
+    ms = 5
+    mew = 0.5
+    broken = 0.25
+    for stareg in RESULTS:
+        color = COLORS3[int(stareg[3]) - 1]
+        marker = 'o^d'[int(stareg[-1]) - 1]
+        alpha = 1. if int(stareg[3]) < 4 else 1
+        mec = 'k' if int(stareg[3]) < 4 else 'gray'
+        #ax1.annotate(stareg, (0.02, i), xycoords=('axes fraction', 'data'))
+        for window in RESULTS[stareg]:
+            r = RESULTS[stareg][window]
+            sec, _unused_dt, _unused_cor, func = window
+            #color = ['blue', 'red', 'green'][ph_type(func)]
+            #offset = 0.01 * ph_type(func) - 0.01
+#            ax2.annotate('%.1fs' % sec, (0.02, i), color=color,
+#                         xycoords=('axes fraction', 'data'))            
+            for j, shift_type in enumerate(SHIFT_TYPE):
+                stat = getattr(r, 'shift_' + shift_type).stat
+                # blue, cyan, light blue, green
+#                if j == 0:
+#                    ax3.annotate('%d/%d' % (stat.n1, stat.n2), (0.02, i),
+#                                 xycoords=('axes fraction', 'data'))
+                #color = COLORS[j]
+                offset = j * 0.1 - 0.1
+                if abs(stat.mean1) < broken:
+                    ax.plot([sec + offset] * 2, [max(stat.mean1 - stat.std1, -broken), min(stat.mean1 + stat.std1, broken)], color='grey', zorder=1)
+                ax.plot([sec + offset], [stat.mean1], marker=marker, mec=mec,
+                            color=color, alpha=alpha, ms=ms, mew=mew, zorder=2)
+                #ax.errorbar(sec + offset, stat.mean1, xerr=None, yerr=stat.std1,
+                #            ecolor=color, mec=color, mfc=color, marker=marker, **PLOT_KWARGS)
+    if linear_regression:
+        from scipy import stats
+        data = []
+        results = []
+        for i in '12345678':
+            data = [(window[0], getattr(RESULTS[stareg][window], 'shift_' + shift_type).stat.mean1) for stareg in ['PB0%s R%s' % (i, j) for j in '123'] if stareg in RESULTS for window in RESULTS[stareg] for shift_type in SHIFT_TYPE ]
+            results.append(stats.linregress(*zip(*data)))
+        data = [(window[0], getattr(RESULTS[stareg][window], 'shift_' + shift_type).stat.mean1) for stareg in RESULTS for window in RESULTS[stareg] for shift_type in SHIFT_TYPE ]
+        (a_s, b_s, r, tt, stderr) = stats.linregress(*zip(*data))
+        print 'all', a_s, b_s, r, tt, stderr
+        for i, r in enumerate(results):
+            (a_s, b_s, r, tt, stderr) = r
+            print i, a_s, b_s, r, tt, stderr
+            ax.plot((0, 27.5), (b_s, b_s + 27.5 * a_s), color=(COLORS3[i] if COLORS3[i] != 'white' else 'k'))
+    else:
+        a_s, b_s = -5. / 1000, 0
+        ax.plot((0, 27.5), (b_s, b_s + 27.5 * a_s), color='k', ls='--', lw=1, zorder= -1)
+
+    #print stats.linregress.__doc__
+
+    # broken axis
+    ax.set_xlim([0, 27.5])
+    ax.set_ylim([-broken - 0.02, broken + 0.02])
+    for line in ax.lines:
+        line.set_ydata([y if abs(y) <= broken else (broken + 0.013) * y / abs(y) for y in line.get_ydata()])
+    dx = 0.2
+    dy = 0.002
+    y0s = (-broken - 0.005, -broken, broken, broken + 0.005)
+    for x0 in (0., 27.5):
+        for i in range(2):
+            ax.plot((x0 , x0), (y0s[2 * i], y0s[2 * i + 1]), color='w', clip_on=False, zorder=5, lw=1.)
+        for y0 in y0s:
+            ax.plot((x0 - dx, x0 + dx), (y0 - dy, y0 + dy), color='k', clip_on=False, zorder=5, lw=1.)
+
+    ax.legend([mpl.lines.Line2D((0,), (1,), marker='o', ls='', color=c, ms=ms, mew=mew) for c in COLORS3] +
+              [mpl.lines.Line2D((0,), (1,), marker='o^d'[i], ls='', color='white', ms=ms, mew=mew) for i in range(3)],
+              ['PB0' + i for i in '12345678'] + ['R1', 'R2', 'R3'],
+               numpoints=1)
+    file_ = TIMEVARI_PATH + 'plots/rf_timevari_all' + '_regr' * linear_regression + '.pdf'
+    fig.savefig(file_)
+    plt.show()
+
+def plot_shift_results_old():
     fig = plt.figure()
     ax1 = fig.add_subplot(131)
     ax2 = fig.add_subplot(132, sharey=ax1, sharex=ax1)
@@ -498,9 +583,9 @@ PLOT_SHIFTS_IN_AXIS = True
 #select_rfs_from_region()
 load_shift_results()
 
-plot_selected_rfs()
-PLOT_SHIFTS_IN_AXIS = False
-plot_selected_rfs()
+#plot_selected_rfs()
+#PLOT_SHIFTS_IN_AXIS = False
+#plot_selected_rfs()
 #create_symlinks()
 
 
@@ -509,7 +594,8 @@ plot_selected_rfs()
 print_shift_results()
 #export_shift_results_to_tex_table()
 #export_shift_results_to_tex_table(just_these=JUST_THESE)
-#plot_shift_results()
+
+plot_shift_results(False)
 #embed()
 #plt.show()
 

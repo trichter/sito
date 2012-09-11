@@ -478,3 +478,18 @@ def readSeisComPEventXML0_6(filename):
     xml = xml.replace('EventParameters', 'eventParameters')
     temp = StringIO.StringIO(xml)
     return readQuakeML(temp)
+
+def getinfo(cat, key):
+    key = ('mag' if key == 'magnitude' else
+           'standard_error' if key == 'rms' else
+           key)
+    key1 = 'magnitudes' if key == 'mag' else 'origins'
+    key2 = ('quality' if key in ('standard_error', 'azimuthal_gap',
+                                 'used_station_count', 'used_phase_count') else
+            None)
+    if key2:
+        return [getattr(getattr(getattr(event, key1)[0], key2), key)
+                for event in cat]
+    else:
+        return [getattr(getattr(event, key1)[0], key) for event in cat]
+

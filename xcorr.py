@@ -12,6 +12,7 @@ import obspy.signal
 from obspy.core.util.decorator import deprecated
 
 
+
 USE_FFTW3 = False
 
 #fft = None
@@ -89,7 +90,8 @@ def timeNorm(data, method=None, param=None, recursive=0):
         if param == None:
             # smooth over 20s at 10Hz
             param = 10 * 10
-        data /= smooth(np.abs(data), param)
+        smoothed = smooth(np.abs(data), param)
+        data /= smoothed
     elif method == 'runningmean_over_filtered':
         if param is None:
             # smooth over 20s at 10Hz over bandpassed data

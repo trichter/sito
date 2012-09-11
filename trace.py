@@ -124,6 +124,15 @@ class Trace(ObsPyTrace):
             #dic['azi2'] = (dic['lazi']-180) % 360
         return out % (dic)
 
+    def addZeros(self, secs_before, secs_after=None):
+        if secs_after is None:
+            secs_after = secs_before
+        self.data = np.hstack((np.zeros(secs_before * self.stats.sampling_rate),
+                               self.data,
+                               np.zeros(secs_after * self.stats.sampling_rate)))
+        self.stats.npts = len(self.data)
+        self.stats.starttime = self.stats.starttime - secs_before
+
     def getArgMax(self, ret='index', spline=False, spline_enhance=100, func=None):
         data = self.data
         if func is not None:
@@ -232,6 +241,42 @@ class Trace(ObsPyTrace):
             factor = int(self.stats.sampling_rate / new_sampling_rate)
             self.decimate(factor, strict_length=False, no_filter=True)
             self.stats.filter += 'DS%d' % factor
+
+    def taper2(self, zeros=0, taper=0):
+        window = self.stats.endtime - self.stats.starttime
+        assert window > 2 * zeros + 2 * taper
+        w_z = self.stats.starttime + zeros, self.stats.endtime - zeros
+        self.slice(None, w_z[0]).data[:] = 0
+        self.slice(w_z[1], None).data[:] = 0
+        temp = self.slice(*w_z)
+        temp.taper(p=2.*taper / (window - 2 * zeros))
+        self.slice(*w_z).data[:] = temp.data
+
+    def acorr(self, shift=None, normalize=True, oneside=False):
+        if shift is None:
+            shift = len(self.data)
+        else:
+            shift = int(shift * self.stats.sampling_rate)
+        size = max(2 * shift + 1, len(self.data) + shift)
+        nfft = nextpow2(size)
+        IN1 = fft(self.data, nfft)
+        IN1 *= np.conjugate(IN1)
+        ret = ifft(IN1).real
+        # shift data for time lag 0 to index 'shift'
+        ret = np.roll(ret, shift)[:2 * shift + 1]
+        # normalize xcorr
+        if normalize:
+            stdev = (np.sum(self.data ** 2)) ** 0.5
+            if stdev == 0:
+                log.warning('Data is zero!!')
+                ret[:] = 0.
+            else:
+                ret /= stdev ** 2
+        if oneside:
+            ret = ret[shift:]
+        self.data = ret
+        self.stats.npts = len(ret)
+
 
     def timeNorm(self, method=None, param=None):
         str_param = str(param)
