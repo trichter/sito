@@ -13,11 +13,12 @@ Required:
 - python 2.7
 - numpy
 - scipy
-- pylab/matplotlib
+- matplotlib
 - basemap
 - ipython
 - obspy - developer version
 - seispy
+- progressbar
 
 sito consist of the following major modules:
 data - Class for data handling (You can set up your own data calss here)
