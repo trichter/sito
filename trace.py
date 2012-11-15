@@ -339,16 +339,20 @@ class Trace(ObsPyTrace):
         self.data = self.data * fak
         self.stats.filter += 'N%s' % fak
 
-    def signoise(self, winsig, winnoise, rel_ponset=True):
+    def signoise(self, winsig, winnoise, relative='ponset'):
         """
         Determine signal noise ratio by dividing the maximum in the two windows.
         """
         st = self.stats
-        if rel_ponset:
-            winsig0 = st.ponset - st.starttime + winsig[0]
-            winsig1 = st.ponset - st.starttime + winsig[1]
-            winnoise0 = st.ponset - st.starttime + winnoise[0]
-            winnoise1 = st.ponset - st.starttime + winnoise[1]
+        if relative in ('ponset', 'middle'):
+            if relative == 'ponset':
+                rel_time = getattr(st, relative)
+            else:
+                rel_time = st.starttime + (st.endtime - st.starttime) / 2
+            winsig0 = rel_time - st.starttime + winsig[0]
+            winsig1 = rel_time - st.starttime + winsig[1]
+            winnoise0 = rel_time - st.starttime + winnoise[0]
+            winnoise1 = rel_time - st.starttime + winnoise[1]
         else:
             winsig0 = winsig[0] - st.starttime
             winsig1 = winsig[1] - st.starttime

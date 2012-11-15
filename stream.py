@@ -1080,7 +1080,7 @@ END""" % (start, end, spiking, cut1, cut2)
 
     def getFunc(self, func):
         """
-        Return np.array of maxima for every trace.
+        Return np.array of func for every trace.
         """
         return np.array([func(tr.data) for tr in self])
 
@@ -1329,7 +1329,7 @@ END""" % (start, end, spiking, cut1, cut2)
         for i, tr in enumerate(self):
             tr.stats.event['id'] = str(i // 3)
 
-    def signoise(self, winsig, winnoise, rel_ponset=True):
+    def signoise(self, winsig, winnoise, relative='ponset'):
         """
         Calculate signoise ratio by dividing the maxima of the given time windows.
 
@@ -1337,7 +1337,7 @@ END""" % (start, end, spiking, cut1, cut2)
         """
         log.info('Calculate SigNoise ratio for stream %s: %s' % (self.hash, util.parameters()))
         for tr in self:
-            tr.signoise(winsig, winnoise, rel_ponset)
+            tr.signoise(winsig, winnoise, relative)
 
     def window(self, start, end, relative='ponset', window='tukey', lenslope=10):
         """
@@ -1484,4 +1484,13 @@ END""" % (start, end, spiking, cut1, cut2)
     def addZeros(self, secs_before, secs_after=None):
         for tr in self:
             tr.addZeros(secs_before, secs_after=secs_after)
+
+    def stretch(self, reftr=None, str_range=0.1, nstr=101, time_windows=None,
+                sides='right'):
+        from sito.noisexcorr import stretch as stretch_fun
+        result = stretch_fun(self, reftr=reftr, str_range=str_range, nstr=nstr,
+                             time_windows=time_windows, sides=sides)
+        return result
+
+
 

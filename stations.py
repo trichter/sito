@@ -104,7 +104,7 @@ class Stations(AttribDict):
     def dist(self, st1, st2, indeg=False):
         dist_deg = gps2DistDegree(self[st1].latitude, self[st1].longitude,
                                  self[st2].latitude, self[st2].longitude)
-        dist_km = gps2DistAzimuth(self[st1].latitude, self[st1].longitude, self[st2].latitude, self[st2].longitude)[0]
+        dist_km = gps2DistAzimuth(self[st1].latitude, self[st1].longitude, self[st2].latitude, self[st2].longitude)[0] / 1.e3
         if indeg is True:
             return dist_deg
         elif indeg is False:

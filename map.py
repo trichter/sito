@@ -197,10 +197,23 @@ def createMap(ll=None, ur=None, figsize=None, margin=None,
         b.set_zorder(10)
         plt.gca().add_collection(b)
         plt.annotate('14 Nov. 2007\n M 7.6', (x2, y2), xytext=(22, 0),
-                                     textcoords='offset points', va='center')
-    if earthquake == 'Tocopilla_position':
+                     textcoords='offset points', va='center')
+    elif earthquake == 'Tocopilla_position':
         x, y = m(-70.06, -22.34)
-        m.plot((x), (y), 'g*', ms=15, zorder=10) #epicenter
+        m.plot((x), (y), 'r*', ms=15, zorder=10) #epicenter
+    elif earthquake:
+        xs, ys = zip(*[m(lon, lat) for lon, lat in zip(*earthquake[:2])])
+        m.plot(xs, ys, 'r*', ms=15, zorder=10) #epicenters
+        if len(earthquake) == 3:
+            for i in range(len(xs)):
+                x, y, mag = xs[i], ys[i], earthquake[2][i]
+                plt.annotate('M%.1f' % mag, xy=(x, y), xytext=(-5, -15),
+                           textcoords='offset points', va='center')
+        elif len(earthquake) > 3:
+            for i in range(len(xs)):
+                x, y, mag, date = xs[i], ys[i], earthquake[2][i], earthquake[3][i]
+                plt.annotate('M%.1f\n%s' % (mag, date.date), xy=(x, y), xytext=(10, 0),
+                           textcoords='offset points', va='center')
     if elevation:
         vmax, resol, bar = elevation_args
         geo = gdal.Open(elevation)
@@ -251,7 +264,7 @@ def createMap(ll=None, ur=None, figsize=None, margin=None,
             cb.set_ticklabels(tls)
             plt.axes(ax)  # make the original axes current again
     if cities == 'ipoc':
-        cities = 'Antofagasta Tocopilla Iquuique Calama Pisagua Arica'.split()
+        cities = 'Antofagasta Tocopilla Iquique Calama Pisagua Arica'.split()
         lons = [-70.4, -70.2, -70.1525, -68.933333, -70.216667, -70.333333]
         lats = [-23.65, -22.096389, -20.213889, -22.466667, -19.6, -18.483333]
         x, y = m(lons, lats)
@@ -281,8 +294,10 @@ def createMap(ll=None, ur=None, figsize=None, margin=None,
 
 def plotEvents(catalog, client=None, **kwargs):
     """
-    IPython must not be started in pylab mode.
+    Plot events on map.
     
+    When client is given it shows the waveform when the event is clicked.
+    IPython may not be started in pylab mode for this feature working.
     """
     def onpress(event):
         if not event.inaxes or event.key != 'shift':

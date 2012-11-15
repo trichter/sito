@@ -429,7 +429,7 @@ def plot_shifts(ax, stareg, label=None):
         line.set_markeredgewidth(1)
         line.set_markersize(4)
 
-def plot_shift_results(linear_regression=True):
+def plot_shift_results(linear_regression=True, colored=True):
     fig = getFig(ratio=0.618, margin=[1.9, 0.3, 1.3, 0.3])
     ax = fig.axes[0]
     assert isinstance(ax, mpl.axes.Axes) #get pydev autocompletion
@@ -439,10 +439,14 @@ def plot_shift_results(linear_regression=True):
     ms = 5
     mew = 0.5
     broken = 0.25
+    MARKERS = 'o^d'
+    MARKERS_BW = 'o^dDhsv<>'[:8]
+    FILLSTYLES_BW = ('top', 'bottom', 'left')
     for stareg in RESULTS:
-        color = COLORS3[int(stareg[3]) - 1]
-        marker = 'o^d'[int(stareg[-1]) - 1]
-        alpha = 1. if int(stareg[3]) < 4 else 1
+        color = COLORS3[int(stareg[3]) - 1] if colored else 'gray'
+        marker = MARKERS[int(stareg[-1]) - 1] if colored else MARKERS_BW[int(stareg[3]) - 1]
+        fillstyle = 'full' if colored else FILLSTYLES_BW[int(stareg[-1]) - 1]
+        alpha = 1. if int(stareg[3]) < 4 else 1.
         mec = 'k' if int(stareg[3]) < 4 else 'gray'
         #ax1.annotate(stareg, (0.02, i), xycoords=('axes fraction', 'data'))
         for window in RESULTS[stareg]:
@@ -463,7 +467,8 @@ def plot_shift_results(linear_regression=True):
                 if abs(stat.mean1) < broken:
                     ax.plot([sec + offset] * 2, [max(stat.mean1 - stat.std1, -broken), min(stat.mean1 + stat.std1, broken)], color='grey', zorder=1)
                 ax.plot([sec + offset], [stat.mean1], marker=marker, mec=mec,
-                            color=color, alpha=alpha, ms=ms, mew=mew, zorder=2)
+                            color=color, alpha=alpha, fillstyle=fillstyle,
+                            ms=ms, mew=mew, zorder=2)
                 #ax.errorbar(sec + offset, stat.mean1, xerr=None, yerr=stat.std1,
                 #            ecolor=color, mec=color, mfc=color, marker=marker, **PLOT_KWARGS)
     if linear_regression:
@@ -499,12 +504,18 @@ def plot_shift_results(linear_regression=True):
             ax.plot((x0 , x0), (y0s[2 * i], y0s[2 * i + 1]), color='w', clip_on=False, zorder=5, lw=1.)
         for y0 in y0s:
             ax.plot((x0 - dx, x0 + dx), (y0 - dy, y0 + dy), color='k', clip_on=False, zorder=5, lw=1.)
+    if colored:
+        ax.legend([mpl.lines.Line2D((0,), (1,), marker='o', ls='', color=c, ms=ms, mew=mew, mec='k'if i < 3 else 'gray') for i, c in enumerate(COLORS3)] +
+                  [mpl.lines.Line2D((0,), (1,), marker=m, ls='', color='white', ms=ms, mew=mew) for m in MARKERS],
+                  ['PB0' + i for i in '12345678'] + ['R1', 'R2', 'R3'],
+                  numpoints=1)
+    else:
+        ax.legend([mpl.lines.Line2D((0,), (1,), marker=m, ls='', color='w', ms=ms, mew=mew, mec='k'if i < 3 else 'gray') for i, m in enumerate(MARKERS_BW)] +
+                  [mpl.lines.Line2D((0,), (1,), marker='o', ls='', color='gray', ms=ms, mew=mew, fillstyle=fs) for fs in FILLSTYLES_BW],
+                  ['PB0' + i for i in '12345678'] + ['R1', 'R2', 'R3'],
+                  numpoints=1)
 
-    ax.legend([mpl.lines.Line2D((0,), (1,), marker='o', ls='', color=c, ms=ms, mew=mew) for c in COLORS3] +
-              [mpl.lines.Line2D((0,), (1,), marker='o^d'[i], ls='', color='white', ms=ms, mew=mew) for i in range(3)],
-              ['PB0' + i for i in '12345678'] + ['R1', 'R2', 'R3'],
-               numpoints=1)
-    file_ = TIMEVARI_PATH + 'plots/rf_timevari_all' + '_regr' * linear_regression + '.pdf'
+    file_ = TIMEVARI_PATH + 'plots/rf_timevari_all' + '_regr' * linear_regression + '_bw' * (not colored) + '.pdf'
     fig.savefig(file_)
     plt.show()
 
@@ -596,6 +607,7 @@ print_shift_results()
 #export_shift_results_to_tex_table(just_these=JUST_THESE)
 
 plot_shift_results(False)
+plot_shift_results(False, False)
 #embed()
 #plt.show()
 

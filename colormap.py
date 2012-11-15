@@ -66,5 +66,26 @@ def createColormapFromGPF(file_, get_dict=False):
     else:
         return matplotlib.colors.LinearSegmentedColormap(name, cdict)
 
+def getXcorrColormap(name='xcorr', get_dict=False):
+    cdict = {'red': ((0.00, 0, 0),
+                     (0.35, 0, 0),
+                     (0.50, 1, 1),
+                     (0.65, 1, 1),
+                     (1.00, 1, 1)),
+             'green': ((0.00, 0, 0),
+                       (0.35, 1, 1),
+                       (0.50, 1, 1),
+                       (0.65, 1, 1),
+                       (1.00, 0, 0)),
+             'blue': ((0.00, 1, 1),
+                      (0.35, 1, 1),
+                      (0.50, 1, 1),
+                      (0.65, 0, 0),
+                      (1.00, 0, 0))}
+    if get_dict:
+        return cdict
+    else:
+        return matplotlib.colors.LinearSegmentedColormap(name, cdict)
+
 if __name__ == '__main__':
     pass

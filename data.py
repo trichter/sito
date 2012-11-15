@@ -107,12 +107,14 @@ class Data(object):
         self.x_plot = xcorr_results + '/plots/%s_%s%s_%s' # 1
         self.x_plot_stack = xcorr_results + '/plots_stack/%s_%s%s_stack%s' # 2
 
-        self.x_ev_prep = self.x_ev_getstr = (data + '/xcorr%s' % xcorr_append +
-                                              '/prep/%d')
-        self.x_ev_corr = xcorr_results + '/xcorr/%s%s_%s' # correlation, filter, time ->1
-        self.x_stack = xcorr_results + '/stack/%s%s_stack%s' # correlation, filter, number of stacks -> 2
-        self.x_plot = xcorr_results + '/plots/%s%s_%s' # 1
-        self.x_plot_stack = xcorr_results + '/plots_stack/%s%s_stack%s' # 2
+        self.x_sac = xcorr_results + '/disp_sac/%s_%s.SAC'
+
+        #self.x_ev_prep = self.x_ev_getstr = (data + '/xcorr%s' % xcorr_append +
+        #                                      '/prep/%d')
+        #self.x_ev_corr = xcorr_results + '/xcorr/%s%s_%s' # correlation, filter, time ->1
+        #self.x_stack = xcorr_results + '/stack/%s%s_stack%s' # correlation, filter, number of stacks -> 2
+        #self.x_plot = xcorr_results + '/plots/%s%s_%s' # 1
+        #self.x_plot_stack = xcorr_results + '/plots_stack/%s%s_stack%s' # 2
 
 
 
@@ -157,13 +159,13 @@ class Data(object):
         return self.client.getWaveform(*args, **kwargs)
 
 
-    def setXLogger(self, add=''):
+    def setXLogger(self, add='', console=False, fmode='w'):
         #logformat = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
         from obspy.core import UTCDateTime
         now = UTCDateTime().isoformat()[:19]
-        logfile = self.x_res + '/log_%s%s.txt' % (now, add)
-        logdfile = self.x_res + '/log_%s%s_debug.txt' % (now, add)
-        util.setRootLogger(logfile=logfile, logdebugfile=logdfile, fmode='w')
+        logfile = self.x_res + '/log/log_%s%s.txt' % (now, add)
+        logdfile = self.x_res + '/log/log_%s%s_debug.txt' % (now, add)
+        util.setRootLogger(logfile=logfile, logdebugfile=logdfile, fmode=fmode, console=console)
 
     def getRawStream(self, date, station, component='Z', endtime=False):
         """
@@ -180,7 +182,7 @@ class Data(object):
                                   'daughter class.')
 
     def getStream(self, date, station, component='Z', endtime=False,
-                  filename=None, checkfile=False):
+                  filename=None, check=False):
         """
         Return a stream from local day files.
 
@@ -195,11 +197,11 @@ class Data(object):
         if filename == None:
             filename = self.getstr + '.QHD'
         filename = filename % (station, date.year, date.julday)
+        if check:
+            return os.path.isfile(filename)
         if not os.path.isfile(filename):
             raise ValueError('No filename for %s %s %s at %s'
                              % (station, component, date.date, filename))
-        elif checkfile:
-            return True
         try:
             if endtime and date.julday == (endtime - 0.001).julday:
                 ms = read(filename, starttime=date, endtime=endtime)
@@ -271,9 +273,12 @@ class Data(object):
         :param time: UTCDateTime object (year, julday and hour properties)
         :return: string saved in self.x_hour completed with arguments
         """
+
         if stack is None:
             return self.xcorr % (getPeriod(period), getCor(*cor), getFilter(filter), getTimeFormat(time, period))
         else:
+            #print self.x_stack
+            #print (getPeriod(period), getCor(*cor), getFilter(filter), getStack(time, period, stack))
             return self.x_stack % (getPeriod(period), getCor(*cor), getFilter(filter), getStack(time, period, stack))
 
     def getXEv(self, cor, time=None, filter=None, stack=None): #@ReservedAssignment
@@ -506,7 +511,7 @@ class Parkfield(Data):
                        'Parkfield.txt')
         self.stations = Stations.read('/home/richter/Data/stations.txt')
         self.stations.pick('PKD')
-        self.paz = seismometer.PAZ_STS2_3
+        self.paz = seismometer.PAZ_STS2
 
     @util.add_doc(Data.getRawStream)
     def getRawStream(self, date, station, component='Z', endtime=False, checkfile=False):
@@ -539,7 +544,7 @@ class IPOC(Data):
 
         self.events = '/home/richter/Data/events/2012_03_events_27-93_mag5.5_IPOC.txt'
         self.stations = Stations.read('/home/richter/Data/stations_ipoc.txt')
-        self.paz = seismometer.PAZ_STS2_3
+        self.paz = seismometer.PAZ_STS2
         self.exception = exception
         if self.client in (True, 'sec24c74', 'gfz'):
             self.initClient()
@@ -592,8 +597,8 @@ class IPOC(Data):
 
     def getChannelFromClient(self, starttime, endtime, station, network='CX',
                              location='', channel='*'):
-        ms = self.client.getWaveform(network, station, location, channel,
-                                     starttime, endtime)
+        ms = Stream(self.client.getWaveform(network, station, location, channel,
+                                            starttime, endtime))
         if len(ms) == 0:
             raise ValueError('No traces in stream returned by seishub.')
         return ms
@@ -613,8 +618,13 @@ class IPOC(Data):
             network = 'GE'
             channel = 'BH' + component
             location = '10'
-        ms = Stream(self.client.getWaveform(network, station, location, channel,
-                                     starttime, endtime))
+        try:
+            ms = self.client.getWaveform(network, station, location, channel,
+                                     starttime, endtime)
+        except:
+            ms = []
+        else:
+            ms = Stream(ms)
         if len(ms) == 0:
             raise ValueError('No traces in stream returned by seishub.')
         if station == 'LVC':

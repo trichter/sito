@@ -249,7 +249,7 @@ def calculate(data, operation):
     return ret
 
 # http://azitech.wordpress.com/2011/03/15/designing-a-butterworth-low-pass-filter-with-scipy/
-def filterResp(freqmin, freqmax, corners=4, zerophase=False, sr=None, N=None, whole=False):
+def filterResp(freqmin, freqmax, corners=2, zerophase=False, sr=None, N=None, whole=False):
     """
     Butterworth-Bandpass Filter.
 

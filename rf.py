@@ -268,6 +268,14 @@ def deconvfAnalyse(rsp, src, sampling_rate, water=0.05, gauss=2., tshift=10., pa
               % (sum(rsp) / sum(src), abs(sum(rf[0]) / sum(rf_src))))
     return fig
 
+def mul_synrf(mod, ps=None, **kwargs):
+    import sito
+    import pylab as plt
+    stream = sito.Stream()
+    for p in ps:
+        stream += synrf(mod, p, **kwargs)
+    return stream
+
 def synrf(mod, p=6.4, wave='P', gauss=2., nsamp=1024, fsamp=20., \
           tshft=10., nsv=(3.5, 0.25)):
     """
@@ -311,9 +319,12 @@ def synrf(mod, p=6.4, wave='P', gauss=2., nsamp=1024, fsamp=20., \
     # Response of L component, Response of Q component, RF of Q component
     fzz, frr, frf = seis._rf.synrf(mod.z, mod.vp, mod.vs, mod.rh, mod.qp, mod.qs, \
                            p, gauss, nsamp, fsamp, tshft, nsvs, nspr, wave)
-    stream = sito.Stream(traces=[sito.Trace(data=fzz), sito.Trace(data=frr), sito.Trace(data=frf)])
+    stream = sito.Stream(traces=[sito.Trace(data=fzz),
+                                 sito.Trace(data=frr),
+                                 sito.Trace(data=frf)])
     for i, tr in enumerate(stream):
         tr.stats.starttime = UTC('2000-01-01') - tshft
+        tr.stats.ponset = UTC('2000-01-01')
         tr.stats.sampling_rate = fsamp
         tr.stats.channel = ('LRSP', 'QRSP', c)[i]
         tr.stats.slowness = p

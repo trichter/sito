@@ -15,6 +15,7 @@ import logging
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
+from sito.colormap import getXcorrColormap
 log = logging.getLogger(__name__)
 cc = mpl.colors.ColorConverter()
 
@@ -405,7 +406,9 @@ class Plot(object):
             scale *= scale0
         if imshow:
             if vmax is None:
-                self.vmax = np.max(np.abs(data))
+                vmax1 = np.max(np.abs(data))
+                vmax2 = np.max(np.abs(np.mean(data, axis=0)))
+                self.vmax = min(vmax1, vmax2 * 1.5)
             else:
                 self.vmax = vmax
             if vmin is None:
@@ -890,7 +893,7 @@ class Plot(object):
                         label.set_rotation(70)
                 elif not 'psd' in info:
                 #else:
-                    ax_info[i].yaxis.set_major_locator(MaxNLocator(3))
+                    ax_info[i].yaxis.set_major_locator(MaxNLocator(5))
 
                 #### end else
             if not 'psd' in info:
@@ -1026,7 +1029,8 @@ def plotXcorr(stream, *args, **kwargs_in):
               imshow=True,
               figtitle='xcorr station',
               xlabel='lag time (s)', ylabel='xcorr',
-              plot_stack=True)
+              plot_stack=True,
+              cmap=getXcorrColormap())
     kwargs.update(kwargs_in)
     return Plot(stream, *args, **kwargs)
 

@@ -35,7 +35,31 @@ PAZ_WOOD_ANDERSON = {
     'gain': 2800
 }
 
-PAZ_STS2_3 = {'poles': [(-0.037004 + 0.037016j), (-0.037004 - 0.037016j),
-                  (-251.33 + 0j), (-131.04 - 467.29j), (-131.04 + 467.29j)],
-        'sensitivity': 629145000.0, 'zeros': [0j, 0j],
-               'gain': 60077000.0, 'name': 'GFZ:STS-2/N/g=1500'}
+#CX stations
+PAZ_STS2 = {'normalization_factor': 60077000.0,
+            'name': 'GFZ:STS-2/N/g=1500',
+            'sensitivity': 629145000.0,
+            'normalization_frequency': 1.0,
+            'sensor_manufacturer': 'Streckeisen',
+            'sensitivity_unit': 'M/S',
+            'sensitivity_frequency': 0.02,
+            'poles': [(-0.037004 + 0.037016j), (-0.037004 - 0.037016j),
+                      (-251.33 + 0j), (-131.04 - 467.29j), (-131.04 + 467.29j)],
+            'gain': 60077000.0,
+            'zeros': [0j, 0j],
+            'sensor_model': 'STS-2/N'}
+# sensitivity at some stations 'sensitivity': 2516580000.0
+
+
+#LVC
+PAZ_GURALP = {'normalization_factor': 71367000.0,
+              'name': 'GFZ:Guralp_CMG-3T/120F/g=1500',
+              'sensitivity': 33500713000.0,
+              'normalization_frequency': 0.1,
+              'sensor_manufacturer': 'Guralp',
+              'sensitivity_unit': 'M/S',
+              'sensitivity_frequency': 0.04,
+              'poles': [(-0.03701 + 0.03701j), (-0.03701 - 0.03701j),
+                        (-197.9 + 197.9j), (-197.9 - 197.9j), (-911.1 + 0j)],
+              'gain': 71367000.0, 'zeros': [0j, 0j],
+              'sensor_model': 'Guralp_CMG-3T/120F'}
