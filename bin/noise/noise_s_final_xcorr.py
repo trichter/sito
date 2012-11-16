@@ -3,54 +3,57 @@
 from obspy.core import UTCDateTime as UTC
 from sito.data import IPOC
 from sito.noisexcorr import (prepare, get_correlations,
-                             plotXcorrs, noisexcorr)
+                             plotXcorrs, noisexcorrf, stack)
 from sito import util
 import matplotlib.pyplot as plt
 from sito.stream import read
-
+from multiprocessing import Pool
+import time
+from sito import seismometer
 
 def main():
-    stations = 'PB03 PB04'
-
+    stations = 'PB01 PB02 PB03 PB04 PB05 PB06 PB07 PB08 PB09 PB10 PB11 PB12 PB13 PB14 PB15 PB16 HMBCX MNMCX PATCX PSGCX LVC'
     stations2 = None
+
 
     components = 'Z'
     # TOcopilla earthquake: 2007-11-14 15:14
-    t1 = UTC('2006-01-01')
-    t2 = UTC('2011-09-01')
-
-    shift = 2000
-    correlations = get_correlations(stations, components, stations2, only_auto=True)
+    t1 = UTC('2006-02-01')
+    t2 = UTC('2012-10-01')
 
     shift = 500
-#    correlations = get_correlations(stations, components, stations2)
-    method = 'filter4-6_water_env2_1bit'
-#    method = 'filter0.01-1_1bit_whitening0.01'
-#    method = 'filter0.005_rm20'
-#    method = 'filter0.005_1bit'
+    correlations = get_correlations(stations, components, stations2, only_cross=True)
 
-    data = IPOC(xcorr_append='/Tocopilla/' + method, use_local_LVC=True)
+    method = 'FINAL_filter0.01-0.5_1bit_whitening'
+
+    data = IPOC(xcorr_append='/' + method, use_local_LVC=False)
     data.setXLogger('_' + method)
-    prepare(data, stations.split(), t1, t2, component=components,
-            filter=(4, 6), downsample=None,
-            eventremoval='waterlevel_env2', param_removal=(10, 0),
-            #whitening=True,
-            normalize='1bit', param_norm=None)
-    noisexcorr(data, correlations, t1, t2, shift)
-    plotXcorrs(data, correlations, t1, t2, start=0, end=25, plot_overview=True, plot_years=False, use_dlognorm=False,
-                      plot_stack=True, plot_psd=True, add_to_title=method, downsample=None)
-    plotXcorrs(data, correlations, t1, t2, start=0, end=25, plot_overview=True, plot_years=False, use_dlognorm=True,
-                      plot_stack=True, plot_psd=True, add_to_file='_dlognorm.png', add_to_title=method, downsample=None)
 
-#    stack_day(data, correlations, dt= -1)
-#    stack_day(data, correlations, dt=10)
+#    pool = Pool()
+#    prepare(data, stations.split(), t1, t2, component=components,
+#            filter=(0.01, 0.5, 2, True), downsample=5,
+#            eventremoval='waterlevel_env2', param_removal=(10, 0),
+#            whitening=True,
+#            use_this_filter_after_whitening=(0.01, 0.5, 2, True),
+#            normalize='1bit', param_norm=None,
+#            pool=pool)
+#    noisexcorrf(data, correlations, t1, t2, shift, pool=pool)
+#    pool.close()
+#    pool.join()
 
-#    plotXStacks(data, correlations, start= -200, end=200, vmax=0.01, dt=10, add_to_file='_scale=0.01_200s.png')
-    #plotXStacks(data, correlations, start= -200, end=200, vmax=0.05, dt= -1, add_to_file='_scale=0.05_200s.png')
-#    ms = read(data.x_day % ('PB03Z', '*') + '.QHD')
-#    tr = ms.calculate('mean')
-#    tr.plot()
-#    ipshell()
+#    plotXcorrs(data, correlations, t1, t2, start=None, end=None, plot_overview=True, plot_years=False, use_dlognorm=False,
+#               plot_stack=True, plot_psd=False, add_to_title='', downsample=None)
+#    stack(data, correlations, dt= -1)
+
+    stack(data, correlations, dt=10 * 24 * 3600, shift=2 * 24 * 3600)
+    plotXcorrs(data, correlations, t1=None, t2=None, start=None, end=None, plot_overview=True, plot_years=False, use_dlognorm=False,
+               plot_stack=True, plot_psd=False, add_to_title='', downsample=None,
+               stack=('10days', '2days'))
+
+
+
+
+
 
 
 
