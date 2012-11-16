@@ -15,16 +15,16 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy.integrate
 import scipy.signal
-#from mystream import read
+# from mystream import read
 
 log = logging.getLogger(__name__)
 
-#statshf = 'sampling_rate delta calib npts network location station channel starttime'
-#statshf_r = statshf + ' endtime'
-#shhf_int = 'SIGN EVENTNO MARK'
-#shhf_float = 'DISTANCE AZIMUTH SLOWNESS INCI DEPTH MAGNITUDE LAT LON SIGNOISE PWDW DCVREG DCVINCI'
-#shhf_str = 'COMMENT OPINFO FILTER QUALITY BYTEORDER P-ONSET S-ONSET ORIGIN'
-#shhf = ' '.join([shhf_int, shhf_float, shhf_str])
+# statshf = 'sampling_rate delta calib npts network location station channel starttime'
+# statshf_r = statshf + ' endtime'
+# shhf_int = 'SIGN EVENTNO MARK'
+# shhf_float = 'DISTANCE AZIMUTH SLOWNESS INCI DEPTH MAGNITUDE LAT LON SIGNOISE PWDW DCVREG DCVINCI'
+# shhf_str = 'COMMENT OPINFO FILTER QUALITY BYTEORDER P-ONSET S-ONSET ORIGIN'
+# shhf = ' '.join([shhf_int, shhf_float, shhf_str])
 
 class Trace(ObsPyTrace):
     """
@@ -62,7 +62,7 @@ class Trace(ObsPyTrace):
             self.stats = trace.stats
             # set data without changing npts in stats object
             super(Trace, self).__setattr__('data', trace.data)
-        if not self.stats.has_key('is_fft'):
+        if not 'is_fft' in self.stats:
             self.stats.is_fft = False
 
     def write(self, filename, format_, **kwargs):
@@ -83,7 +83,7 @@ class Trace(ObsPyTrace):
         >>> tr = Trace()
         >>> tr.write("out.mseed", format_="MSEED") # doctest: +SKIP
         """
-        # we need to import here in order to prevent a circular import of 
+        # we need to import here in order to prevent a circular import of
         # Stream and Trace classes
         from sito.stream import Stream
         Stream([self]).write(filename, format_, **kwargs)
@@ -113,15 +113,15 @@ class Trace(ObsPyTrace):
 
         if mod == 0:
             out += '%(npts)d samples | %(filter)s'
-            #dic['st'] = self.stats.starttime.isoformat()
+            # dic['st'] = self.stats.starttime.isoformat()
         elif mod == 1:
             out += '| %(filter)s | ' + out2
-            #dic['st'] = self.stats.starttime.date.isoformat()
+            # dic['st'] = self.stats.starttime.date.isoformat()
         else:
-            out += '| ' + out2 + ', lazi %(lazi).1f, linci %(linci).1f, marked:%(mark)d' #, razi %(razi).1f, azi2 %(azi2).1f'
-            #dic['st'] = self.stats.starttime.date.isoformat()
-            #dic['razi'] = (-90-dic['lazi']) % 360
-            #dic['azi2'] = (dic['lazi']-180) % 360
+            out += '| ' + out2 + ', lazi %(lazi).1f, linci %(linci).1f, marked:%(mark)d'  # , razi %(razi).1f, azi2 %(azi2).1f'
+            # dic['st'] = self.stats.starttime.date.isoformat()
+            # dic['razi'] = (-90-dic['lazi']) % 360
+            # dic['azi2'] = (dic['lazi']-180) % 360
         return out % (dic)
 
     def addZeros(self, secs_before, secs_after=None):
@@ -180,7 +180,7 @@ class Trace(ObsPyTrace):
         return fftfreq(self.stats.npts, 1. / self.stats.sampling_rate)
 
     def ffttrim(self, min_freq=0, max_freq=100, dec=1):
-        if self.stats.has_key('freq_min'):
+        if 'freq_min' in self.stats:
             raise ValueError('you can use ffttrim only once.')
         freqs = self.fftfreq()
         freq_bool = (min_freq <= freqs) * (freqs <= max_freq)
@@ -200,7 +200,7 @@ class Trace(ObsPyTrace):
         """
         Detrend trace.
         """
-        self.data = scipy.signal.detrend(self.data) #, axis=-1, type='linear', bp=0)
+        self.data = scipy.signal.detrend(self.data)  # , axis=-1, type='linear', bp=0)
         self.stats.filter += 'Dt'
 
     def integrate(self):
@@ -303,10 +303,10 @@ class Trace(ObsPyTrace):
         self.data[i0:] = util.mocorr(self.data[i0:],
                                          model.z, model.vp, model.vs,
                                          st.slowness, p0, st.sampling_rate, phc).astype(self.data.dtype)
-        #trc.data[i0:] = util.mocorr(trc.data[i0:],
+        # trc.data[i0:] = util.mocorr(trc.data[i0:],
         #                model.z, model.vp, model.vs,
         #                p, p0, fs, phc).astype(trc.data.dtype)
-        #i0 = -int(float(trc.time)*trc.fsamp)
+        # i0 = -int(float(trc.time)*trc.fsamp)
         st.filter += 'MC%s,%s' % (phase, p0)
 
     def zmigr(self, model='iasp91', phase='Ps', zmax=750, dz=0.5):
@@ -361,21 +361,21 @@ class Trace(ObsPyTrace):
         t = np.arange(self.stats.npts) * 1. / st.sampling_rate
         datasig = self.data[(t >= winsig0) * (t <= winsig1)]
         datanoise = self.data[(t >= winnoise0) * (t <= winnoise1)]
-        #ipshell()
+        # ipshell()
         st.signoise = max(abs(datasig)) / max(abs(datanoise))
 
     def _window(self, start, end, window='tukey', lenslope=10):
         """
         Window between start and end with args passed to util.getWindow function.
         """
-        #if relative != 'ok':
+        # if relative != 'ok':
         #    start, end = util.getTimeIntervall(Stream([self]), start, end, relative, ttype='secstart')
         #    start = start[0]
         #    end = end[0]
         t = np.linspace(0, self.stats.endtime - self.stats.starttime, self.stats.npts)
         boolarray = (t >= start) * (t <= end)
         lenwindow = len(boolarray[boolarray])
-        alpha = 2. * lenslope / (end - start) # inserted 1- !!!
+        alpha = 2. * lenslope / (end - start)  # inserted 1- !!!
         if alpha > 1:
             alpha = 1
         elif alpha < 0:
@@ -405,7 +405,7 @@ class Trace(ObsPyTrace):
         """
         if self.stats.is_fft:
             pxx = self.data
-            if self.stats.has_key('freq_min'):
+            if 'freq_min' in self.stats:
                 freqs = np.linspace(self.stats.freq_min, self.stats.freq_max, self.stats.npts)
             else:
                 freqs = self.fftfreq()
@@ -428,7 +428,7 @@ class Trace(ObsPyTrace):
         else:
             fig = ax.get_figure()
 
-        ### print title
+        # ## print title
         if figtitle is not None:
             figtitle = figtitle.replace('station', self.stats.station)
             figtitle = figtitle.replace('component', self.stats.channel[-1])
@@ -443,7 +443,7 @@ class Trace(ObsPyTrace):
             if not title_in_axis:
                 fig.suptitle(figtitle, x=0.5,
                              horizontalalignment='center')
-                #fig.text(title, 0., 0.95, horizontalalignment = 'left' )
+                # fig.text(title, 0., 0.95, horizontalalignment = 'left' )
             else:
                 ax.text(0.1, 1, figtitle, verticalalignment='top',
                         transform=ax.transAxes)

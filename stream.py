@@ -10,8 +10,8 @@ from sito.xcorr import timeNorm, spectralWhitening
 import glob
 import logging
 import numpy as np
-import obspy.core #@UnresolvedImport
-import obspy.signal #@UnresolvedImport
+import obspy.core  # @UnresolvedImport
+import obspy.signal  # @UnresolvedImport
 import os.path
 
 log = logging.getLogger(__name__)
@@ -38,7 +38,7 @@ def _reprSortedStats(stats):
                     for key in dict_copy.keys()])
     return 'obspy.core.Stats({%s})' % head[:-2]
 
-#def read(pathname_or_url, format=None, headonly=False, ** kwargs):
+# def read(pathname_or_url, format=None, headonly=False, ** kwargs):
 #    """Extend read function from stream module. sh entries are moved to stream."""
 #    ms = obspy.core.read(pathname_or_url, format, headonly, ** kwargs)
 #    if '.' in pathname_or_url:
@@ -75,7 +75,7 @@ def _reprSortedStats(stats):
 #    return Stream(ms)
 
 @add_doc(obspy.core.read)
-def read(pathname_or_url, *args, ** kwargs): #format=None, headonly=False,
+def read(pathname_or_url, *args, ** kwargs):  # format=None, headonly=False,
     """
     Read waveform files into an Stream object.
 
@@ -95,7 +95,7 @@ def read(pathname_or_url, *args, ** kwargs): #format=None, headonly=False,
                 content.extend(file_content.split('\n'))
     if len(content) > 0 and len(content) == len(ms):
         for i in range(len(ms)):
-            st = eval(content[i]) #quiet slow
+            st = eval(content[i])  # quiet slow
             if ms[i].stats.get('station') and ms[i].stats.station != st.station or \
                ms[i].stats.get('channel') and ms[i].stats.channel != st.channel or \
                not ignore_starttime and ms[i].stats.get('starttime') and abs(ms[i].stats.starttime - st.starttime) > 1:
@@ -116,7 +116,7 @@ def read(pathname_or_url, *args, ** kwargs): #format=None, headonly=False,
             if len(tr.stats['sh']) == 0:
                 del tr.stats['sh']
             if 'filter' in tr.stats.keys():
-                #DT;LP:max:25.00;DS by 2;
+                # DT;LP:max:25.00;DS by 2;
                 tr.stats.filter = tr.stats.filter.translate(None, ' |;:')
                 tr.stats.filter = tr.stats.filter.replace('DT', 'Dt').replace('max', '').replace('min', '').replace('by', '')
             if not 'filter' in tr.stats.keys():
@@ -145,15 +145,15 @@ class Stream(ObsPyStream):
     Class derieved from obspy.core.Stream with some additional functionality.
     """
     @property
-    def hash(self): #@ReservedAssignment
+    def hash(self):  # @ReservedAssignment
         return '%03d' % (hash(repr(self)) % 100)
 
-    #@classmethod
-    #def read(cls, *args, **kwargs):
+    # @classmethod
+    # def read(cls, *args, **kwargs):
     #    return read(*args, **kwargs)
 
-    #@classmethod
-    #def stroptions(cls, * args, ** kwargs):
+    # @classmethod
+    # def stroptions(cls, * args, ** kwargs):
     #    return ' '.join(['%s' % i for i in args] + ['%s=%s' % (i, j) for i, j in kwargs.iteritems()])
 
     @add_doc(obspy.core.Stream.write)
@@ -191,7 +191,7 @@ class Stream(ObsPyStream):
                 if not 'sac' in tr.stats.keys():
                     tr.stats['sac'] = AttribDict({})
                 # save distance in sac header
-                if tr.stats.has_key('dist'):
+                if 'dist' in tr.stats:
                     tr.stats.sac.dist = tr.stats.dist
         if len(self) > 0:
 #            from sito import ipshell
@@ -219,7 +219,7 @@ class Stream(ObsPyStream):
             towrite = ''
             for tr in self:
                 towrite += _reprSortedStats(tr.stats) + '\n'
-                #towrite += repr(tr.stats) + '\n'
+                # towrite += repr(tr.stats) + '\n'
             with open(filename + '.HAT', 'w') as filename:
                 filename.write(towrite)
         log.info('Write stream %s with %s traces to %s' % (self.hash, len(self), filename))
@@ -288,9 +288,9 @@ class Stream(ObsPyStream):
         if hf == 'id':
             hi = [tr.id for tr in self]
         else:
-            hi = [eval('tr.stats.' + hf) for tr in self] # quick and dirty
+            hi = [eval('tr.stats.' + hf) for tr in self]  # quick and dirty
             # quick but wrong ('.' in hf):
-            #hi = [getattr(tr.stats, hf) for tr in self]
+            # hi = [getattr(tr.stats, hf) for tr in self]
             # alternatives: operator.attrgetter
             # http://code.activestate.com/recipes/577346-getattr-with-arbitrary-depth/
         if operation is not None and isinstance(operation, basestring):
@@ -494,7 +494,7 @@ class Stream(ObsPyStream):
         Override obspy.core.Stream.sort.
 
         Every sortable header field can be in keys.
-        """ #Sort channel reverse (Z,N,E).
+        """  # Sort channel reverse (Z,N,E).
         # Check the list and all items.
         if isinstance(keys, basestring):
             keys = [keys]
@@ -610,8 +610,8 @@ class Stream(ObsPyStream):
         str_list = []
         N_stream = len(self)
         for i, trace in enumerate(self):
-            t1 = trace.stats.starttime - trace.stats.ponset #sh['P-ONSET']
-            t2 = trace.stats.endtime - trace.stats.ponset #sh['P-ONSET']
+            t1 = trace.stats.starttime - trace.stats.ponset  # sh['P-ONSET']
+            t2 = trace.stats.endtime - trace.stats.ponset  # sh['P-ONSET']
             N_data = trace.stats.npts
             t = np.linspace(t1, t2, N_data)
             str_list.append('> trace     %d\n' % (i + 1))
@@ -629,8 +629,8 @@ class Stream(ObsPyStream):
         must be equal.
         Use for example sort(['event.id', 'station', 'component'] before.
         """
-        #self.sort(['station', 'eventno', 'component'])
-        #if not ( (np.array(self.getHI('npts'))==self[0].getHI('ntps')).all()
+        # self.sort(['station', 'eventno', 'component'])
+        # if not ( (np.array(self.getHI('npts'))==self[0].getHI('ntps')).all()
         #  and (np.array(self.getHI('sampling_rate'))==self[0].getHI('sampling_rate')).all()):
         #    log.error('Traces must have same sampling_rate and npts.')
         #    return False
@@ -716,7 +716,7 @@ class Stream(ObsPyStream):
         while j < len(self) - 2:
             try:
                 inci, azi, lin = rf.polar(data[i + 2, :],
-                                             data[i + 1, :], data[i, :]) # E, N, Z = x, y, z
+                                             data[i + 1, :], data[i, :])  # E, N, Z = x, y, z
                 if retlin: lin_list.append(lin)
                 # wrong documentation in seis.polar.polarization_py ?
                 # angle between E (x-axis) clockwise to eigenvalue -> angle between N clockwise to eigenvalue
@@ -866,7 +866,7 @@ class Stream(ObsPyStream):
         """
         Aply deconvolution in time-domain.
         """
-        #if not winsrc[1]- winsrc[0]>= winrsp[1]-winrsp[0] >= winrf[1]-winrf[0]:
+        # if not winsrc[1]- winsrc[0]>= winrsp[1]-winrsp[0] >= winrf[1]-winrf[0]:
         #    raise ValueError('Source window has to be bigger than Response window has to be bigger than RF window!')
         log.info('Deconvolve stream %s: %s' % (self.hash, util.parameters()))
         for i in range(len(self) // 3):
@@ -874,12 +874,12 @@ class Stream(ObsPyStream):
             onset = self[3 * i].stats.get(where)
             src = self[3 * i:3 * i + 1].slice(onset + winsrc[0], onset + winsrc[1]).copy()
             src = src[0].data
-            #src *= util.main.getWindow('tukey', len(src), 2*winsrc[2]/(winsrc[1]-winsrc[0]))
+            # src *= util.main.getWindow('tukey', len(src), 2*winsrc[2]/(winsrc[1]-winsrc[0]))
             src *= cosTaper(len(src), 2 * winsrc[2] / (winsrc[1] - winsrc[0]))
             rsp = self[3 * i:3 * i + 3].slice(onset + winrsp[0], onset + winrsp[1])
             rsp = [tr.data for tr in rsp]
             time_rf = winrf[1] - winrf[0]
-            shift = int(samp * ((winrsp[1] - winrsp[0] - winsrc[1] + winsrc[0] - time_rf) / 2 + winrsp[0] - winsrc[0] - winrf[0])) # shift_zero == 0 for winrsp[1]-winrsp[0] = winsrc[1]-winsrc[0]+time_rf + 2*(-winrsp[0]+winsrc[0]+winrf[0])
+            shift = int(samp * ((winrsp[1] - winrsp[0] - winsrc[1] + winsrc[0] - time_rf) / 2 + winrsp[0] - winsrc[0] - winrf[0]))  # shift_zero == 0 for winrsp[1]-winrsp[0] = winsrc[1]-winsrc[0]+time_rf + 2*(-winrsp[0]+winsrc[0]+winrf[0])
             rf_resp = rf.deconvt(rsp, src, spiking, shift, length=int(time_rf * samp), normalize=normalize)
             # multiply -1 on Q and T component
             self[3 * i].data, self[3 * i + 1].data, self[3 * i + 2].data = rf_resp[0], -rf_resp[1], -rf_resp[2]
@@ -969,9 +969,9 @@ END""" % (start, end, spiking, cut1, cut2)
         log.info('Pspier stream %s: %s' % (self.hash, util.parameters(exclude=['file_'])))
         if filename:
             self.writeStationPosition(filename)
-        #if component:
+        # if component:
         #    stream = self.select(component=component)
-        #else:
+        # else:
         #    stream = self
         slat = np.array(self.getHI('slat'))
         slon = np.array(self.getHI('slon'))
@@ -1010,7 +1010,7 @@ END""" % (start, end, spiking, cut1, cut2)
                      stream[0].stats.has_key('event') and
                      stream[0].stats.event.has_key(header[6:]))):
                         setattr(tr.stats, header, np.mean(self.getHI(header)))
-                        #exec("tr.stats.%s = np.mean(self.getHI('%s'))" % (header, header))
+                        # exec("tr.stats.%s = np.mean(self.getHI('%s'))" % (header, header))
         if insert:
             self.insert(0, tr)
         return tr
