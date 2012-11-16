@@ -250,7 +250,7 @@ class Stream(ObsPyStream):
         if not traces == None and len(traces) > 0 and not isinstance(traces[0], Trace):
             traces = [Trace(trace=tr) for tr in traces]
         super(Stream, self).__init__(traces=traces)
-        if len(self) > 0 and not self[0].stats.has_key('is_fft'):
+        if len(self) > 0 and not 'is_fft' in self[0].stats:
             self.setHI('is_fft', False)
 
 
