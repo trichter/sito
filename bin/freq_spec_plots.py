@@ -1,10 +1,13 @@
 #!/usr/bin/env python
 # by TR
+"""
+Creates a power spectrum plot of a period of time (here 1 month, 5 stations)
+"""
+
 from obspy.core import UTCDateTime as UTC
 from sito.data import IPOC
 from sito.util import timegen
 import matplotlib.pyplot as plt
-from sito.debug import embed
 import numpy as np
 from sito import Trace
 
@@ -44,7 +47,7 @@ def main():
                                freq_min=min(freqs), freq_max=max(freqs)))
         ax = tr.plotPSD(ax=ax, label='%s-%d' % (st[0].stats.station, i), figtitle=None)
         plt.draw()
-        #embed()
+        # embed()
     ax.legend()
     fig = ax.get_figure()
     fig.suptitle('%s  %s  %s to %s' % (stations, component, t1.strftime('%Y-%m-%d'),

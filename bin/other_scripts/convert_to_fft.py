@@ -1,15 +1,17 @@
 #!/usr/bin/env python
 # by TR
+"""
+Convert prepared data for cross correlation to fft
+"""
 import logging
 from obspy.core import UTCDateTime as UTC
 from sito.data import IPOC
-#import matplotlib.pyplot as plt
 from sito.util.main import daygen
 logging.basicConfig()
 log = logging.getLogger('convert_fft')
 
-#import warnings
-#warnings.simplefilter("error", np.ComplexWarning)
+# import warnings
+# warnings.simplefilter("error", np.ComplexWarning)
 
 def main():
     stations = 'PB03 PB04'
