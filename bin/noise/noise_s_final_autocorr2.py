@@ -13,13 +13,14 @@ from sito import seismometer
 
 def main():
     stations = 'PB01 PB02 PB03 PB04 PB05 PB06 PB07 PB08 HMBCX MNMCX PATCX PSGCX LVC'
+    stations = 'PB09 PB10 PB11 PB12 PB13 PB14 PB15 PB16'
     stations2 = None
 
 
     components = 'Z'
     # TOcopilla earthquake: 2007-11-14 15:14
     t1 = UTC('2006-02-01')
-    t2 = UTC('2008-12-31')
+    t2 = UTC('2012-10-01')
 
     shift = 100
     correlations = get_correlations(stations, components, stations2, only_auto=True)
@@ -29,16 +30,16 @@ def main():
     data = IPOC(xcorr_append='/' + method, use_local_LVC=False)
     data.setXLogger('_' + method)
 
-#    pool = Pool()
-#    prepare(data, stations.split(), t1, t2, component=components,
-#            filter=(1, 3, 2, True), downsample=20,
-#            eventremoval='waterlevel_env2', param_removal=(10, 0),
-#            whitening=False,
-#            normalize='1bit', param_norm=None,
-#            pool=pool)
-#    noisexcorrf(data, correlations, t1, t2, shift, pool=pool)
-#    pool.close()
-#    pool.join()
+    pool = Pool()
+    prepare(data, stations.split(), t1, t2, component=components,
+            filter=(1, 3, 2, True), downsample=20,
+            eventremoval='waterlevel_env2', param_removal=(10, 0),
+            whitening=False,
+            normalize='1bit', param_norm=None,
+            pool=pool)
+    noisexcorrf(data, correlations, t1, t2, shift, pool=pool)
+    pool.close()
+    pool.join()
 
 #    plotXcorrs(data, correlations, t1, t2, start=None, end=None, plot_overview=True, plot_years=False, use_dlognorm=False,
 #                      plot_stack=True, plot_psd=False, add_to_title='', downsample=None)
@@ -49,9 +50,9 @@ def main():
 #    plotXcorrs(data, correlations, t1=None, t2=None, start=None, end=None, plot_overview=True, plot_years=False, use_dlognorm=False,
 #               plot_stack=True, plot_psd=False, add_to_title='', downsample=None,
 #               stack=('10days', '2days'))
-    plotXcorrs(data, correlations, t1=None, t2=None, start=0, end=20, plot_overview=True, plot_years=False, use_dlognorm=False,
-               plot_stack=True, plot_psd=False, add_to_title='', downsample=None,
-               stack=('10days', '2days'), ext='_hg.png', vmax=0.1)
+#    plotXcorrs(data, correlations, t1=None, t2=None, start=0, end=20, plot_overview=True, plot_years=False, use_dlognorm=False,
+#               plot_stack=True, plot_psd=False, add_to_title='', downsample=None,
+#               stack=('10days', '2days'), ext='_hg.png', vmax=0.1)
 #    util.checkDir(data.getPlotX(('', ''), t1))
     #for correlation in correlations:
 #        stations = correlation[0][:-1], correlation[1][:-1]

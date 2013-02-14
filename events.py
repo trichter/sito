@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # by TR
 
 from obspy.core import AttribDict, UTCDateTime as UTC
@@ -6,13 +7,14 @@ from sito import util
 from sito.util import add_doc, gps2DistDegree, feregion
 import logging
 import numpy as np
-import obspy.neries #@UnresolvedImport
+import obspy.neries  #@UnresolvedImport
 import re
+from obspy.core.event import Catalog, Event, Origin, Magnitude, EventDescription
 
 log = logging.getLogger(__name__)
 
 #TODO change to obspy.core.event.Catalog class
-
+#### DEPRECIATED
 class Events(list):
     """
     Class for holding event data.
@@ -245,7 +247,7 @@ class Events(list):
         log.info('Read event information of %d events from stream %s' % (len(list_), stream.hash))
         return cls(list_)
 
-    def write(self, file_, format=format_, header=header): #@ReservedAssignment
+    def write(self, file_, format=format_, header=header):  #@ReservedAssignment
         """
         Write events to file_.
 
@@ -393,7 +395,7 @@ class Events(list):
             radius_val = radius
         else:
             if radius == 'magnitude':
-                radius_val *= 10  # we will scale the dots by 10 time the magnitude  
+                radius_val *= 10  # we will scale the dots by 10 time the magnitude
         m.scatter(x, y, s=radius_val, c=color_val, marker='o', lw=0, alpha=alpha)
         if show_colorbar:
             c = plt.colorbar(orientation='horizontal', shrink=0.4)
@@ -419,7 +421,7 @@ class Events(list):
         # draw parallels and meridians.
         m.drawparallels(np.arange(-90., 120., 30.))
         m.drawmeridians(np.arange(0., 390., 30.))
-        # , lat=0, lon=0, bigmap=False,circles=(30, 90), circles_around=None, lines=None, 
+        # , lat=0, lon=0, bigmap=False,circles=(30, 90), circles_around=None, lines=None,
         self.plot_(m, lat=lat, lon=lon, bigmap=bigmap, **kwargs)
 
         #plt.title('Full Disk Orthographic Projection')
@@ -443,10 +445,11 @@ class Events(list):
         if show:
             plt.show()
 #        plt.savefig('ortho_full.png')
+#### END DEPRECIATED
 
-import re #@Reimport
+import re  #@Reimport
 import StringIO
-from obspy.core.quakeml import readQuakeML #@UnresolvedImport
+from obspy.core.quakeml import readQuakeML  #@UnresolvedImport
 ev_expr = re.compile(r'<event.*>')
 mag_expr = re.compile(r'(<magnitude publicID=")(.{0,50})(#.*?">)'
                       '(.*?)(magnitude)(.*?)(magnitude)(.*?</magnitude>)',
@@ -478,6 +481,58 @@ def readSeisComPEventXML0_6(filename):
     xml = xml.replace('EventParameters', 'eventParameters')
     temp = StringIO.StringIO(xml)
     return readQuakeML(temp)
+
+regex_GEOFON = r"""
+    # regex for text pasted from geofon eartquake bulletin 
+    ^(?P<time>[\d\s:-]{19,20})\s+
+    (?P<magnitude>\d.\d)\s+
+    (?P<latitude>\d+.\d+)°(?P<latitude_sign>[NS])\s+
+    (?P<longitude>\d+.\d+)°(?P<longitude_sign>[EW])\s+
+    (?P<depth>\d+)\s+
+    (?P<AM>[AM])\s+
+    (?P<flinn>[\w\s]*)$
+"""
+def read_regex(event_file, regex=regex_GEOFON, creation_info='GEOFON'):
+    """
+    Read events from event_file with the help of given regular expression.
+    """
+    with open(event_file, 'r') as f:
+        filedata = f.read()
+    event_matches = re.finditer(regex, filedata, re.VERBOSE + re.MULTILINE)
+    list_ = [i.groupdict() for i in event_matches]
+    events = []
+    for event in list_:
+        # convert numbers to float and int types
+        for key, item in event.iteritems():
+            if util.isint(item):
+                event[key] = int(item)
+            elif util.isfloat(item):
+                event[key] = float(item)
+            else:
+                event[key] = item.strip()
+        if 'latitude_sign' in event and event['latitude_sign'] == 'S':
+            event['latitude'] = -event['latitude']
+        if 'longitude_sign' in event and event['longitude_sign'] == 'W':
+            event['longitude'] = -event['longitude']
+        if 'AM' in event:
+            ci = creation_info + (' automatic' if event['AM'] == 'A' else ' manual')
+        else:
+            ci = creation_info
+        ev = Event(event_type='earthquake', creation_info=ci,
+                   origins=[Origin(time=UTC(event['time']),
+                                   latitude=event['latitude'],
+                                   longitude=event['longitude'],
+                                   depth=event['depth'])],
+                   magnitudes=[Magnitude(mag=event['magnitude'],
+                                         magnitude_type='M')],
+                   event_descriptions=[EventDescription(event['flinn'],
+                                                        'flinn-engdahl region')]
+                                       if 'flinn' in event else None
+                   )
+        events.append(ev)
+    events.sort(key=lambda x: x.origins[0].time)
+    return Catalog(events)
+
 
 def getinfo(cat, key):
     key = ('mag' if key == 'magnitude' else

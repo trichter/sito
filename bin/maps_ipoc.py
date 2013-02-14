@@ -19,7 +19,7 @@ def plot_some_events():
     2008-02-15T16:54:04    5.5    -23.00    -70.20     32
     2008-02-04T17:01:30    6.6    -20.20    -70.00     36
     2007-12-16T08:09:16    7.1    -22.80    -70.00     14
-    2007-11-14T15:40:51    7.8    -22.34    -70.06     37""" #GEOFON:-22.30    -69.80
+    2007-11-14T15:40:51    7.8    -22.34    -70.06     37"""  #GEOFON:-22.30    -69.80
     events = []
     for eq in eqs.split('\n'):
         time, mag, lat, lon, depth = eq.split()
@@ -55,9 +55,9 @@ def plot_results1():
     ipoc_no_data = ipoc.pick('PB09 PB10 PB11 PB12 PB13 PB14 PB15', replace=False)
     #1-3Hz
     ipoc_bad_data = ipoc.pick('LVC MNMCX ', replace=False)
-    ipoc_no_signal = ipoc.pick('PB06 PB08 PSGCX', replace=False) #<0.2%
-    ipoc_small_signal = ipoc.pick('HMBCX PATCX PB01 PB02 PB03 PB07', replace=False) #0.2-0.5%
-    ipoc_big_signal = ipoc.pick('PB04 PB05', replace=False) #>0.5%
+    ipoc_no_signal = ipoc.pick('PB06 PB08 PSGCX', replace=False)  #<0.2%
+    ipoc_small_signal = ipoc.pick('HMBCX PATCX PB01 PB02 PB03 PB07', replace=False)  #0.2-0.5%
+    ipoc_big_signal = ipoc.pick('PB04 PB05', replace=False)  #>0.5%
 
     ipoc_no_data.plot(m, mfc='w', ms=8, zorder=20)
     ipoc_bad_data.plot(m, mfc='#00FFFF', ms=8, zorder=20)
@@ -69,9 +69,9 @@ def plot_results1():
     for st in ipoc:
         ipoc[st].longitude += 0.15
     ipoc_bad_data = ipoc.pick('PB04', replace=False)
-    ipoc_no_signal = ipoc.pick('HMBCX MNMCX PB01 PB06 PSGCX LVC', replace=False) #<0.2%
-    ipoc_small_signal = ipoc.pick('PB02 PB03 PB05 PB07 PB08', replace=False) #0.2-0.5%
-    ipoc_big_signal = ipoc.pick('PATCX', replace=False) #>0.5%
+    ipoc_no_signal = ipoc.pick('HMBCX MNMCX PB01 PB06 PSGCX LVC', replace=False)  #<0.2%
+    ipoc_small_signal = ipoc.pick('PB02 PB03 PB05 PB07 PB08', replace=False)  #0.2-0.5%
+    ipoc_big_signal = ipoc.pick('PATCX', replace=False)  #>0.5%
 
     ipoc_bad_data.plot(m, marker='s', mfc='#00FFFF', ms=8, zorder=20, annotate=False)
     ipoc_no_signal.plot(m, marker='s', mfc='y', ms=8, zorder=20, annotate=False)
@@ -85,5 +85,18 @@ def plot_results1():
               labels, numpoints=1, loc='lower right')
     plt.gcf().savefig('/home/richter/Documents/pics/maps/ipoc/ipoc_map_results.png')
 
-plot_results1()
-#plt.show()
+def plot_small_map_for_F():
+    from sito.stations import IPOCStations
+    from matplotlib.lines import Line2D
+
+    ipoc = IPOCStations()
+    ipoc.pick('PATCX')
+    m = map.createIPOCMap(show=False, ll=(-24, -70.9), ur=(-18, -68.5),
+                          earthquake='Tocopilla_position', stations=ipoc,
+                          cities='Tocopilla')
+
+
+
+#plot_results1()
+plot_small_map_for_F()
+plt.show()

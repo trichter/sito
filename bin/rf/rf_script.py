@@ -57,13 +57,9 @@ def main():
 ##### IPOC filenames
     ipoc = mod_data.IPOC()
     ipoc.events = '/home/richter/Data/events/2012_03_events_27-93_mag5.5_IPOC.txt'
-#    ipoc.rf_events = ipoc.data + '/receiver/events30-90/%s_%s'
-#    ipoc.rf_results = ipoc.results + '/receiver/results/%s_%s'
-#    ipoc.rf_results_dir = ipoc.results + '/receiver/results/'
     ipoc.rf_events = ipoc.data + '/receiver/2012_events_mag5.5/%s_%s'
-    ipoc.rf_results = ipoc.results + '/receiver/2012_mag5.5/%s_%s'
-    #ipoc.rf_results = ipoc.results + '/receiver/2012_mag5.5_RT/%s_%s'
-    ipoc.rf_results_dir = ipoc.results + '/receiver/2012_mag5.5/'
+    ipoc.rf_results = ipoc.results + '/receiver/2012_mag5.5_RT/%s_%s'
+    ipoc.rf_results_dir = ipoc.results + '/receiver/2012_mag5.5_RT/'
     ipoc.rf_plot_dir = ipoc.rf_results_dir + 'plots/'
 
 ##### EventPicker
@@ -74,7 +70,7 @@ def main():
 #    pick_events(window = (-100,400), phase = 'PP')
 
     data = ipoc
-    data.stations.pick('LVC')
+#    data.stations.pick('LVC')
 #    events2 = events.Events.read(data.events)
 #    events2.pick(after='2012-01-01')
 #    data.events = events2
@@ -109,12 +105,12 @@ def main():
     data = ipoc
     plotdir = data.rf_plot_dir
     util.checkDir(plotdir)
-    calculate_rf(rotateLQT=True)
-    #mout()
-    mout('LVC')
+    calculate_rf(rotateLQT=False)
+    mout()
+    #mout('LVC')
 #    produce_event_files('PB02')
     ###create_rf_plots(components='LQT')  # Do not use!
-    #create_rf_plots(components='ZRT')
+    create_rf_plots(components='ZRT')
 
 #    create_interval_plot('140<=st.azi<=160')
 #    time_binned('PB01', 2006.75, 2011.25, 0.5,'140<=st.azi<=160')
@@ -209,7 +205,7 @@ def main():
 #    #time_binned('PB01', 2006.75, 2011.25, 0.5,'270<=st.azi<=300')
 
 
-def pick_events(window=(-100, 500), filter=(0.033, 2.), phase='P', new_sampling_rate=20): #@ReservedAssignment
+def pick_events(window=(-100, 500), filter=(0.033, 2.), phase='P', new_sampling_rate=20):  #@ReservedAssignment
     logfile = os.path.dirname(data.rf_events) + '/log_pick_events_%s.txt'
     util.checkDir(logfile)
     util.setRootLogger(logfile=logfile % '', logdebugfile=logfile % '_debug')
@@ -217,7 +213,7 @@ def pick_events(window=(-100, 500), filter=(0.033, 2.), phase='P', new_sampling_
     mod_data.eventPicker(data, component='all', phase=phase, window=window,
                      filter=filter, new_sampling_rate=new_sampling_rate)
 @exha()
-def calculate_rf(year='*', pp=False, rotateLQT=True):
+def calculate_rf(year='*', pp=False, rotateLQT=True, deconvolvef=False):
     logfile = data.rf_results_dir + 'a_log%s.txt'
     util.checkDir(logfile)
     util.setRootLogger(logfile=logfile % '', logdebugfile=logfile % '_debug')
@@ -229,19 +225,30 @@ def calculate_rf(year='*', pp=False, rotateLQT=True):
         stream.pspier(60, data.stations)
         log.info('number of events: %s' % (len(stream) // 3))
         #stream.filter2(0.033, 2.)
-        stream.trim2(-50, 200)
+        stream.trim2(-20, 100, relative='ponset')
         stream.sort(('event.id', 'station', 'component'))
         stream.check()
+        stream.setHI('mark', False)
         if rotateLQT:
             stream.rotateZNE2LQT(-5, 15, usetheo=True)
+            stream.afarm(signoise=2.0, remove=True)
         else:
+            #stream.rotateZNE2LQT(-5, 15, usetheo=True)
+            #stream.afarm(signoise=2.0, remove=True)
+            #stream.trim2(-20, 100, relative='ponset')
+            #stream.rotateLQT2ZNE(usetheo=True)
             stream.rotateNE2RT()
-        stream.afarm(signoise=2.0, remove=True)
+        #stream.afarm(signoise=2.0, remove=True)
+        #stream.trim2(-25, 100, relative='ponset')
+
         # log.info('number of events after first farm: %s' % (len(stream)//3))
         # util.ipshell()
         #stream.receiverf(water=0.005, gauss=5, tshift=20, pad=0,
         #                 window='tukey', start=-10, end=30, where='ponset', lenslope=5)
-        stream.receivert()
+        if deconvolvef:
+            stream.receiverf()
+        else:
+            stream.receivert()
         #stream.receiverSH(-10, 80, 1)
         #stream.afarm('rf', signoise=2., signoiseQ=1., maxL=1 / 1.5, sigQ=False, broad=True, remove=False)
         #stream.afarm('rf', signoise=False, signoiseQ=False, maxL=False, sigQ=False, broad=False, remove=False)
@@ -301,7 +308,7 @@ def read_rf(force=False):
 def getFig(num=0, ratio=1.5, margin=None, **kwargs):
     axes = [1. - 0.1 * num] + [0.1] * num
     if margin == None:
-        margin = [1.5, 0.1, 1.5, 0.9] #left, rigth, bottom, top
+        margin = [1.5, 0.1, 1.5, 0.9]  #left, rigth, bottom, top
     fig = imaging.getFigure(axes, width=15., margin=margin, ratio=ratio,
                             fontsize=12, labelsize='small', **kwargs)
     return fig
@@ -405,7 +412,7 @@ def profile(stations, expr=None):
     plt.close(plot.fig)
 
 @exha()
-def profile_pp_binned(stations, bin, header='plon', expr=None, xlim=None): #, scale=0.2 @ReservedAssignment
+def profile_pp_binned(stations, bin, header='plon', expr=None, xlim=None):  #, scale=0.2 @ReservedAssignment
     """ PP profile """
     log.info('***** Create piercing point binned plot')
     util.setRootLogger(logdebugfile=data.rf_results_dir + 'a_log_profile_pp.txt')

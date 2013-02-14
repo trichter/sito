@@ -10,7 +10,6 @@ from osgeo import gdal
 import scipy as sp
 import scipy.interpolate
 import os.path
-
 def createColormapFromGPF(file_):
     data = sp.loadtxt(file_)
     cdict = {'red': np.take(data, (0, 1, 1), axis=1),
@@ -25,15 +24,15 @@ def plotTrench(map_, lons, lats, size=10000, sep=50000, side=1, **kwargs):
     N_new = int(((y[-1] - y[0]) ** 2 + (x[-1] - x[0]) ** 2) ** 0.5 / size * 10)
     param = np.linspace(0, 1, N)
     param_new = np.linspace(0, 1, N_new)
-    # interpolate with splines   
+    # interpolate with splines
     #s=None for perfect fit, 4.2
     tck = (scipy.interpolate.splprep([x, y], u=param, s=N ** 4.3))[0]
     x, y = scipy.interpolate.splev(param_new, tck)
-    # interpolate with polyfit        
+    # interpolate with polyfit
     #polyx = np.polyfit(param, x, 30)
     #polyy = np.polyfit(param, y, 30)
     #x = np.polyval(polyx, param_new)
-    #y = np.polyval(polyy, param_new)                    
+    #y = np.polyval(polyy, param_new)
     map_.plot(x, y, 'k')
     polys = []
     i2 = 0
@@ -190,9 +189,9 @@ def createMap(ll=None, ur=None, figsize=None, margin=None,
         stations.plot(m, mfc='b', ms=5, zorder=10)
     if earthquake == 'Tocopilla':
         x, y = m(-70.06, -22.34)
-        x2, y2 = m(-69.5, -24.2) #x2, y2 = m(-70.4, -21.5)
-        m.plot((x, x2), (y, y2), 'k-', lw=1) #line
-        m.plot((x), (y), 'r*', ms=15, zorder=10) #epicenter
+        x2, y2 = m(-69.5, -24.2)  #x2, y2 = m(-70.4, -21.5)
+        m.plot((x, x2), (y, y2), 'k-', lw=1)  #line
+        m.plot((x), (y), 'r*', ms=15, zorder=10)  #epicenter
         b = Beach([358, 26, 109], xy=(x2, y2), width=50000, linewidth=1)
         b.set_zorder(10)
         plt.gca().add_collection(b)
@@ -200,10 +199,10 @@ def createMap(ll=None, ur=None, figsize=None, margin=None,
                      textcoords='offset points', va='center')
     elif earthquake == 'Tocopilla_position':
         x, y = m(-70.06, -22.34)
-        m.plot((x), (y), 'r*', ms=15, zorder=10) #epicenter
+        m.plot((x), (y), 'r*', ms=15, zorder=10)  #epicenter
     elif earthquake:
         xs, ys = zip(*[m(lon, lat) for lon, lat in zip(*earthquake[:2])])
-        m.plot(xs, ys, 'r*', ms=15, zorder=10) #epicenters
+        m.plot(xs, ys, 'r*', ms=15, zorder=10)  #epicenters
         if len(earthquake) == 3:
             for i in range(len(xs)):
                 x, y, mag = xs[i], ys[i], earthquake[2][i]
@@ -223,7 +222,7 @@ def createMap(ll=None, ur=None, figsize=None, margin=None,
         delon = coords[1]
         delat = coords[5]
         lons = coords[0] + delon * np.arange(nlons)
-        lats = coords[3] + delat * np.arange(nlats)[::-1] # reverse lats
+        lats = coords[3] + delat * np.arange(nlats)[::-1]  # reverse lats
         # create masked array, reversing data in latitude direction
         # (so that data is oriented in increasing latitude,
         # as transform_scalar requires).
@@ -267,8 +266,8 @@ def createMap(ll=None, ur=None, figsize=None, margin=None,
         cities = 'Antofagasta Tocopilla Iquique Calama Pisagua Arica'.split()
         lons = [-70.4, -70.2, -70.1525, -68.933333, -70.216667, -70.333333]
         lats = [-23.65, -22.096389, -20.213889, -22.466667, -19.6, -18.483333]
-        x, y = m(lons, lats)
-        m.plot(x[:len(cities)], y[:len(cities)], 'o', ms=5, mfc='w', mec='k',
+        x, y = m(lons[:len(cities)], lats[:len(cities)])
+        m.plot(x, y, 'o', ms=5, mfc='w', mec='k',
                zorder=10)
         for i in range(len(cities)):
             if 'Anto' in cities[i]:
@@ -277,6 +276,15 @@ def createMap(ll=None, ur=None, figsize=None, margin=None,
             else:
                 plt.annotate(cities[i], (x[i], y[i]), xytext=(-5, 0),
                                      textcoords='offset points', ha='right')
+    elif cities == 'Tocopilla':
+        lons = [-70.2]
+        lats = [-22.096389]
+        x, y = m(lons, lats)
+        m.plot(x, y, 'o', ms=5, mfc='w', mec='k',
+               zorder=10)
+        plt.annotate('Tocopilla', (x[0], y[0]), xytext=(5, 0),
+                             textcoords='offset points')
+
     if trench == 'ipoc':
         coords = np.transpose(np.loadtxt('/home/richter/Data/map/'
                                          'nchile_trench.txt'))

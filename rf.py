@@ -5,9 +5,10 @@ from numpy import abs, max, maximum, pi
 from obspy.signal.util import nextpow2
 from scipy.fftpack import fft, ifft
 from sito import _toeplitz
-from sito.xcorr import xcorrt, acorrt # ToDo use scipy
+from sito.xcorr import xcorrt, acorrt  # ToDo use scipy
 import logging
 import numpy as np
+from sito.util.main import filterResp
 
 log = logging.getLogger(__name__)
 
@@ -20,7 +21,7 @@ def toeplitz(a1, b, a2=None):
         a2 = a2[np.newaxis, :]
     if len(b.shape) == 1:
         bnew = b[np.newaxis, :]
-    ret = _toeplitz.cbto_sl(a1, a2, bnew) #@UndefinedVariable
+    ret = _toeplitz.cbto_sl(a1, a2, bnew)  #@UndefinedVariable
     if not a1.dtype == np.complex and not a2.dtype == np.complex:
         ret = np.real(ret)
     if len(b.shape) == 1:
@@ -51,7 +52,7 @@ def polar(fx, fy, fz):
     else:
         covmat = covar3(fx, fy, fz)
     #covmat = np.cov(np.vstack((fx,fy,fz)))
-    covmat = covmat.real # after Bataille & Chiu (1991)
+    covmat = covmat.real  # after Bataille & Chiu (1991)
     # Python-only version
     eigval, eigvec = np.linalg.eigh(covmat)
     eigvec = eigvec.transpose()
@@ -72,8 +73,32 @@ def polar(fx, fy, fz):
     # "incidence" angle
     inc = np.arctan2(np.sqrt(eigvec[0][0] ** 2 + eigvec[0][1] ** 2), eigvec[0][2]) * 180 / pi
     azi = np.arctan2(eigvec[0][1], eigvec[0][0]) * 180 / pi
-    azi = (-90 - azi) % 360 # convert azi from E anticlockwise to azi from N clockwise
+    azi = (-90 - azi) % 360  # convert azi from E anticlockwise to azi from N clockwise
     return inc, azi, lin
+
+
+def gauss(data, sampling_rate, gauss, pad=0, hp=None, return_gauss=False):
+    """
+    Gauss filter
+
+    gauss       Gauss parameter of Low-pass filter
+    pad         multiply number of samples used for fft by 2**pad
+    """
+    N = len(data)
+    nfft = nextpow2(N) * 2 ** pad
+    freq = np.fft.fftfreq(nfft, d=1. / sampling_rate)
+    gauss = np.exp(maximum(-(0.5 * 2 * pi * freq / gauss) ** 2, -700.))
+    if hp:
+        hp = filterResp(hp[0], hp[1], corners=hp[2], zerophase=True,
+                        sr=sampling_rate, N=nfft, whole=True)[1]
+        gauss = hp * gauss
+    if return_gauss:
+        return gauss
+#    import pylab
+#    pylab.plot(freq, gauss)
+#    pylab.show()
+    resp = ifft(gauss * fft(data, nfft), nfft)[:N]
+    return resp
 
 def deconvf(rsp_list, src, sampling_rate, water=0.05, gauss=2., tshift=10., pad=0, length=None, normalize=True, normalize_to_src=False, returnall=False):
     """
@@ -345,7 +370,7 @@ def test():
     dummy = deconvf(data, src, 100, water=0.01, gauss=2, tshift=10., pad=0)
 
     ms = read('./tests/data_temp/STREAM.QHD')[0:3]
-    deconvfAnalyse(ms[1].data, ms[0].data, 100, water=0.01, gauss=2, tshift=10., pad=0) # try gauss=2, 10, 100
+    deconvfAnalyse(ms[1].data, ms[0].data, 100, water=0.01, gauss=2, tshift=10., pad=0)  # try gauss=2, 10, 100
     plt.show()
 
 if __name__ == '__main__':

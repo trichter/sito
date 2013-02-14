@@ -56,7 +56,7 @@ if args.date is None:
         kwargs['scale'] = 1.
 else:
     station = args.file_station
-    if station.startswith('PB') or station == 'LVC':
+    if station.startswith('PB') or station == 'LVC' or station.endswith('CX'):
         from sito.data import IPOC
         data = IPOC(xcorr_append=args.xcorr_append)
     elif station == 'PKD':

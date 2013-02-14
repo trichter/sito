@@ -113,7 +113,7 @@ def smooth(x, window_len, window='flat'):
     http://www.scipy.org/Cookbook/SignalSmooth
     """
 
-    #window_len = 2 * window_len + 1
+    # window_len = 2 * window_len + 1
     if window_len % 2 == 0:
         window_len += 1
     if x.ndim != 1:
@@ -125,14 +125,14 @@ def smooth(x, window_len, window='flat'):
     if not window in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
         raise ValueError, "Window is one of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'"
     s = np.r_[x[(window_len - 1) // 2 :0:-1], x, x[-1:-(window_len + 1) // 2:-1]]
-    if window == 'flat': #moving average
+    if window == 'flat':  # moving average
         w = np.ones(window_len, 'd')
     else:
         w = getattr(np, window)(window_len)
     y = np.convolve(w / w.sum(), s, mode='valid')
     return y
 
-#def smooth2(x, t, window_len, window='flat'):
+# def smooth2(x, t, window_len, window='flat'):
 #    ret = x.copy()
 #    N1 = int(window_len / (t[1] - t[0]))
 #    N2 = int(window_len / (t[-1] - t[-2]))
@@ -160,7 +160,7 @@ def timegen(t1, t2, dt=24 * 3600, start=None):
         yield(t)
         t += dt
 
-def streamtimegen(stream, dt=24 * 3600, start=None, shift=None):
+def streamtimegen(stream, dt=24 * 3600, start=None, shift=None, use_slice=False):
     """
     Generator for streams with time length of dt seconds (Default: 1day).
     
@@ -175,7 +175,10 @@ def streamtimegen(stream, dt=24 * 3600, start=None, shift=None):
         shift = dt
     for t in timegen(stream[0].stats.starttime + 0.1, stream[-1].stats.endtime - 0.1, dt=shift, start=start):
         t_next = t + dt
-        st_sel = stream.select('%r<=st.starttime<%r' % (t, t_next))
+        if use_slice:
+            st_sel = stream.slice(t, t_next)
+        else:
+            st_sel = stream.select('%r<=st.starttime<%r' % (t, t_next))
         if len(st_sel) > 0:
             yield st_sel
 
@@ -245,7 +248,7 @@ def calculate(data, operation):
         ret = np.mean(data, axis=0)
     else:
         ret = operation(data)
-        #raise ValueError('Unknown operation.')
+        # raise ValueError('Unknown operation.')
     return ret
 
 # http://azitech.wordpress.com/2011/03/15/designing-a-butterworth-low-pass-filter-with-scipy/
@@ -284,7 +287,7 @@ def filterResp(freqmin, freqmax, corners=2, zerophase=False, sr=None, N=None, wh
         raise ValueError(msg)
     [b, a] = iirfilter(corners, [low, high], btype='band',
                        ftype='butter', output='ba')
-    freqs, values = freqz(b, a, N, whole=whole) #@UnusedVariable
+    freqs, values = freqz(b, a, N, whole=whole)  # @UnusedVariable
     if zerophase:
         values *= np.conjugate(values)
     return freqs, values
@@ -307,26 +310,26 @@ SH_OPY_EVENT_IDX = {
 
 
 SH_OPY_IDX = {
-    #'LENGTH':'npts',
-    #x'SIGN':'I011',
-    #'EVENTNO':'event_id',
+    # 'LENGTH':'npts',
+    # x'SIGN':'I011',
+    # 'EVENTNO':'event_id',
     'NETWORK': 'network',
     'MARK':'mark',
-    #'DELTA':'delta',
-    #'CALIB':'calib',
+    # 'DELTA':'delta',
+    # 'CALIB':'calib',
     'DISTANCE':'dist',
     'AZIMUTH':'azi',
     'SLOWNESS':'slowness',
     'INCI':'inci',
     'SIGNOISE':'signoise',
-#x 'PWDW':'pwdw',  length of p-wave train in sec
+# x 'PWDW':'pwdw',  length of p-wave train in sec
     'DCVREG':'lazi',
     'DCVINCI':'linci',
     'COMMENT':'comment',
-    #'STATION':'station',
-    #x 'OPINFO':'S002',
+    # 'STATION':'station',
+    # x 'OPINFO':'S002',
     'FILTER':'filter',
-    #x 'QUALITY':'quality',
+    # x 'QUALITY':'quality',
     # 'COMP':'C000',
     # 'CHAN1':'C001',
     # 'CHAN2':'C002',

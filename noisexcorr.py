@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # by TR
 from glob import glob
-from miic.core.stretch_mod import time_windows_creation, time_stretch_estimate
+from miic.core.stretch_mod import time_windows_creation, time_stretch_estimate, time_stretch_apply
 from sito import util
 from sito.stream import Stream, read
 from sito.trace import Trace
@@ -61,7 +61,7 @@ class FloatingStream(object):
         self.time += self.period
         self.stream.trim(self.time - self.shift_sec, None)
 
-    def getStream(self, day=None, *args, **kwargs): #@UnusedVariable
+    def getStream(self, day=None, *args, **kwargs):  #@UnusedVariable
         """
         Return a stream for xcorr.
 
@@ -121,7 +121,7 @@ class FloatingStream(object):
         return ret_stream
 
 def _prepare_stream(stream, output_file,
-            freq_domain=True, filter=(None, None), downsample=None, #@ReservedAssignment
+            freq_domain=True, filter=(None, None), downsample=None,  #@ReservedAssignment
             simulate=None,
             eventremoval=None, param_removal=None,
             normalize=None, param_norm=None,
@@ -136,7 +136,7 @@ def _prepare_stream(stream, output_file,
     # gap of one sample in IPOC data
     # method = 1: overlapping data: take the one of second trace
     # fill_value=0 fill gaps with zeros
-    stream.merge(method=1, interpolation_samples=10)#, fill_value=0)
+    stream.merge(method=1, interpolation_samples=10)  #, fill_value=0)
     for tr in stream:
         tr.data = util.fillArray(tr.data, fill_value=0.)
         tr.stats.filter = ''
@@ -171,7 +171,7 @@ def _prepare_stream(stream, output_file,
         stream.fft()
     if whitening:
         if use_this_filter_after_whitening:
-            filter = use_this_filter_after_whitening #@ReservedAssignment
+            filter = use_this_filter_after_whitening  #@ReservedAssignment
         stream.spectralWhitening(smoothi=whitening, apply_filter=filter)
     if normalize:
         stream.timeNorm(method=normalize, param=param_norm)
@@ -232,7 +232,7 @@ def _prepare_stream(stream, output_file,
 #                             itertools.combinations_with_replacement(event_stream, repeat=2)):
 #                if tr1.stats.sampling_rate != tr2.stats.sampling_rate:
 #                    raise ValueError('Sampling rate is different.')
-#                    # check data                           
+#                    # check data
 #                if tr1.stats.npts != tr2.stats.npts:
 #                    log.info('Discard data because of different npts %d vs %d' %
 #                             (tr1.stats.npts, tr2.stats.npts))
@@ -264,7 +264,7 @@ def _prepare_stream(stream, output_file,
 
 @util.add_doc(timeNorm)
 def prepare(data, stations, t1, t2, component='all', use_floating_stream=True,
-            use_client=True, #arclink_client_for_LVC=None,
+            use_client=True,  #arclink_client_for_LVC=None,
             pool=None, max_preload=5, **kwargs):
     """
     Prepare data for cross correlation.
@@ -315,8 +315,8 @@ def prepare(data, stations, t1, t2, component='all', use_floating_stream=True,
         #for (station, t_day) in ProgressBar()(itertools.product(stations, daygen(t1, t2))):
                 try:
                     stream = data.getRawStreamFromClient(t_day - 60, t_day + 24 * 3600 + 60, station, component=component)
-                except ValueError:
-                    log.info('Error loading station %s day %s' % (str(station), t_day.date))
+                except ValueError as ex:
+                    log.info('Error loading station %s day %s: %s' % (str(station), t_day.date, ex))
                     continue
 #                    if station != 'LVC' or not arclink_client_for_LVC:
 #                        continue
@@ -483,9 +483,11 @@ def _get_async_resutls(async_results):
 
 #counter = 0
 def noisexcorrf(data, correlations, t1, t2, shift_sec, period=24 * 3600,
-                 pool=None, max_preload=5):
+                 pool=None, max_preload=5, overlap=0):
     """
-    Day or period files have to be in frequency domain!
+    Freqeuency domain noise cross correlation
+    
+    Expects day files prepared with prepare()
     """
     if period == 'day':
         period = 24 * 3600
@@ -493,9 +495,11 @@ def noisexcorrf(data, correlations, t1, t2, shift_sec, period=24 * 3600,
         period = 3600
     log.info('Noise cross correlation: %s' % util.parameters())
     print 'Noise cross correlation...'
-    if period != 24 * 3600:
-        raise ValueError('function at the moment only '
-                         'working with period=24*3600.')
+#    if period != 24 * 3600:
+#        raise ValueError('function at the moment only '
+#                         'working with period=24*3600.')
+    if 24 * 3600 % period != 0:
+        raise ValueError('period has to be factor of a day')
     for correlation in ProgressBar()(correlations):
         autocorr = correlation[0] == correlation[1]
         station1 = correlation[0][:-1]
@@ -506,10 +510,9 @@ def noisexcorrf(data, correlations, t1, t2, shift_sec, period=24 * 3600,
 #        if not autocorr:
 #            data2 = FloatingStream(data, t1, station2, 0, component=comp2, period=period)
         xcorr = [] if pool else Stream()
-        for t in timegen(t1, t2, period):
+        for t in timegen(t1, t2, 24 * 3600):
             if len(xcorr) > 0 and (t - period).date != t.date and (
                     (period > 3600 and t.julday == 1) or period <= 3600):
-
                 data.writeX(_get_async_resutls(xcorr) if pool else xcorr,
                             correlation, t - period, period=period)
                 xcorr = [] if pool else Stream()
@@ -533,27 +536,42 @@ def noisexcorrf(data, correlations, t1, t2, shift_sec, period=24 * 3600,
             tr2 = stream2[0]
             if tr1.stats.sampling_rate != tr2.stats.sampling_rate:
                 raise ValueError('Sampling rate is different.')
-            # check data                           
+            # check data
             if tr1.stats.npts != tr2.stats.npts:
                 log.info('Discard data because of different npts %d vs %d' % (tr1.stats.npts, tr2.stats.npts))
                 continue
-            assert tr1.stats.is_fft and tr2.stats.is_fft
             log.debug ('Calculating xcorr for %s' % t)
-            args = (tr1, tr2, shift_sec, correlation)
-            if pool:
-#                global counter
-#                counter += 1
-#                print 'counter+', counter
-#                def _callb(res):
-#                    global counter
-#                    counter -= 1
-#                    print 'counter-', counter
-
-                if len(xcorr) >= max_preload:
-                    xcorr[-max_preload].wait()
-                xcorr.append(pool.apply_async(_noisexcorrf_traces, args))
+            # original implementation only ok for period == 'day'
+            if period == 24 * 3600:
+                assert tr1.stats.is_fft and tr2.stats.is_fft
+                args = (tr1, tr2, shift_sec, correlation)
+                if pool:
+                    if len(xcorr) >= max_preload:
+                        xcorr[-max_preload].wait()
+                    xcorr.append(pool.apply_async(_noisexcorrf_traces, args))
+                else:
+                    xcorr.append(_noisexcorrf_traces(*args))
+            # new implementation for all other periods
             else:
-                xcorr.append(_noisexcorrf_traces(*args))
+                if tr1.stats.is_fft:
+                    tr1.ifft()
+                if tr2.stats.is_fft:
+                    tr2.ifft()
+                t1_ = t
+                while t1_ < t + 24 * 3600 - period + 0.1:
+                    t2_ = t1_ + period
+                    tr1_ = tr1.slice(t1_, t2_)
+                    tr2_ = tr2.slice(t1_, t2_)
+                    tr1_.fft()
+                    tr2_.fft()
+                    args = (tr1_, tr2_, shift_sec, correlation)
+                    if pool:
+                        if len(xcorr) >= max_preload:
+                            xcorr[-max_preload].wait()
+                        xcorr.append(pool.apply_async(_noisexcorrf_traces, args))
+                    else:
+                        xcorr.append(_noisexcorrf_traces(*args))
+                    t1_ = t1_ + period - overlap
         if len(xcorr) > 0:
             data.writeX(_get_async_resutls(xcorr) if pool else xcorr,
                         correlation, t, period=period)
@@ -612,7 +630,7 @@ def noisexcorrf(data, correlations, t1, t2, shift_sec, period=24 * 3600,
 #            if sr != tr2.stats.sampling_rate:
 #                raise ValueError('Sampling rate is different.')
 #                #log.error('Sampling rate differs. This should absolutely not be')
-#            # check data                           
+#            # check data
 #            if tr1.stats.npts - tr2.stats.npts < 0 or \
 #                tr2.stats.npts < discard / 100. * sr * 24 * 3600:
 #                log.info('Discard day %s because less than %d%% available' % ((tr2.stats.starttime + 1).date, discard))
@@ -662,7 +680,7 @@ def getFilters(*args, **kwargs):
     return ret
 
 
-def filter(data, correlations, filters, stack=None, period=24 * 3600): #@ReservedAssignment
+def filter(data, correlations, filters, stack=None, period=24 * 3600):  #@ReservedAssignment
     log.info('Filter correlations: %s' % util.parameters())
     for correlation in correlations:
         expr = data.getX(correlation, '????', filter_=None, period=period, stack=stack) + '.QHD'
@@ -694,6 +712,7 @@ def stack(data, correlations, dt= -1, filters=None, period=24 * 3600, shift=None
             except Exception as err:
                 log.warning('Could not load file, because:/n%s' % str(err))
             else:
+                print correlation
                 for some_traces in streamtimegen(st, dt=dt, start=None, shift=shift):
                     tr = some_traces.calculate('mean')
                     stack.append(tr)
@@ -705,7 +724,6 @@ def stack(data, correlations, dt= -1, filters=None, period=24 * 3600, shift=None
                         data.writeX(stack, correlation, time=some_traces[0].stats.starttime - 365 * 24 * 3600, filter_=filter_, period=period, stack=(dt, shift))
                         last_year = this_year
                         stack = Stream()
-
                 if not onefile:
                     if yearfiles:
                         time = some_traces[0].stats.starttime
@@ -774,22 +792,23 @@ def get_correlations(stations, component='ZNE', stations2=None, only_auto=False,
         component = 'ZNE'
     ret = []
     done = []
-    for comp in component:
-        for st1 in stations:
-            for st2 in stations2:
-                st1c = st1 + comp
-                st2c = st2 + comp
-                if only_auto and st1c != st2c:
-                    continue
-                if only_cross and st1c == st2c:
-                    continue
-                if not set((st1c, st2c)) in done:
-                    ret.append((st1c, st2c))
-                    done.append(set((st1c, st2c)))
+    for comp1 in component:
+        for comp2 in component:
+            for st1 in stations:
+                for st2 in stations2:
+                    st1c = st1 + comp1
+                    st2c = st2 + comp2
+                    if only_auto and st1c != st2c:
+                        continue
+                    if only_cross and st1c == st2c:
+                        continue
+                    if not set((st1c, st2c)) in done:
+                        ret.append((st1c, st2c))
+                        done.append(set((st1c, st2c)))
     return ret
 
 def plotXcorrs(data, correlations, t1, t2, filters=None, filter_now=True, start=None, end=None, select=None, plot_overview=True, plot_years=True,
-                        add_to_title='', add_to_file='', show=False, landscape=False, use_dlognorm=True, stack=None, ext='.png', **kwargs):
+                        add_to_title='', add_to_file='', show=False, landscape=False, use_dlognorm=True, period=24 * 3600, stack=None, ext='.png', **kwargs):
     figsize = (8.267, 11.693)
     if landscape:
         figsize = figsize[::-1]
@@ -823,7 +842,7 @@ def plotXcorrs(data, correlations, t1, t2, filters=None, filter_now=True, start=
             startt = 0
         if filter_now:
             try:
-                stream_orig = data.readX(correlation, t1, t2, filter=None, stack=stack)
+                stream_orig = data.readX(correlation, t1, t2, period=period, filter=None, stack=stack)
             except IOError as ex:
                 print ex
                 continue
@@ -834,7 +853,7 @@ def plotXcorrs(data, correlations, t1, t2, filters=None, filter_now=True, start=
                     stream.filter2(*filter_)
             else:
                 try:
-                    stream = data.readX(correlation, t1, t2, filter=filter_, stack=stack)
+                    stream = data.readX(correlation, t1, t2, period=period, filter=filter_, stack=stack)
                 except IOError as ex:
                     print ex
                     continue
@@ -847,14 +866,14 @@ def plotXcorrs(data, correlations, t1, t2, filters=None, filter_now=True, start=
                         save = None
                         figtitle = add_to_title
                     else:
-                        savebase = data.getPlotX(correlation, 'all', filter=filter_, stack=stack) + add_to_file
+                        savebase = data.getPlotX(correlation, 'all', period=period, filter=filter_, stack=stack) + add_to_file
                         save = savebase + ext
                         savebase = os.path.basename(savebase)
                         figtitle = savebase + ' ' + add_to_title
                     stream.plotXcorr(startt, endt, imshow=True, use_dlognorm=use_dlognorm,
                                      fig=plt.figure(figsize=figsize),
                                      figtitle=figtitle, save=save, show=show,
-                                     dateformatter='%Y-%m-%d', #dateformatter='%y %b'
+                                     dateformatter='%Y-%m-%d',  #dateformatter='%y %b'
                                      ** kwargs)
                     plt.show()
                 if plot_years:
@@ -864,13 +883,13 @@ def plotXcorrs(data, correlations, t1, t2, filters=None, filter_now=True, start=
                             save = None
                             figtitle = add_to_title
                         else:
-                            savebase = data.getPlotX(correlation, t_year, filter=filter, stack=stack) + add_to_file
+                            savebase = data.getPlotX(correlation, t_year, period=period, filter=filter, stack=stack) + add_to_file
                             save = savebase + ext
                             savebase = os.path.basename(savebase)
                             figtitle = savebase + ' ' + add_to_title
                         s_year.plotXcorr(startt, endt, imshow=True, use_dlognorm=use_dlognorm,
                                      fig=plt.figure(figsize=figsize),
-                                     figtitle=figtitle, #'station year ' + add_to_title,
+                                     figtitle=figtitle,  #'station year ' + add_to_title,
                                      dateformatter='%y-%m-%d', show=False,
                                      save=save,
                                      **kwargs)
@@ -948,7 +967,7 @@ def removeBad(stream, bar_cor=0.8, start=None, end=None, relative='middle'):
     reftr = stream2.calculate('mean')
     st = reftr.stats
     pos_max = np.argmax(np.abs(reftr.data)) / st.sampling_rate - (st.endtime - st.starttime) / 2.
-    corr, dt = stretch(stream2, reftr, str_range=0.0, nstr=1, #@UnusedVariable
+    corr, dt = stretch(stream2, reftr, str_range=0.0, nstr=1,  #@UnusedVariable
                        time_windows=((np.abs(pos_max) - 5,), 10),
                        left_side=(pos_max < 0))
     num = 0
@@ -991,10 +1010,8 @@ def removeBad(stream, bar_cor=0.8, start=None, end=None, relative='middle'):
 ##    ipshell()
 #    return corr, dt
 
-def stretch(stream, reftr=None, start=None, end=None, relative='starttime', str_range=0.1, nstr=100, time_windows=None, sides='right'):
+def stretch(stream, reftr=None, stretch=None, start=None, end=None, relative='starttime', str_range=0.1, nstr=100, time_windows=None, sides='right'):
     sr = stream[0].stats.sampling_rate
-    if reftr:
-        assert sr == reftr.stats.sampling_rate
     if time_windows is not None and isinstance(time_windows[1], (float, int)):
         tw_mat = time_windows_creation(np.array(time_windows[0]) * int(sr),
                                        time_windows[1] * int(sr))
@@ -1002,11 +1019,34 @@ def stretch(stream, reftr=None, start=None, end=None, relative='starttime', str_
         raise ValueError('Wrong format for time_window')
     log.debug('getting data...')
     data = getDataWindow(stream, start=start, end=end, relative=relative)
-    ref_data = getDataWindow(Stream([reftr]), start=start, end=end, relative=relative)[0, :] if reftr else None
-    log.debug('calculate correlations and time shifts...')
-    return time_stretch_estimate(data, ref_trc=ref_data, tw=tw_mat,
+    if reftr != 'alternative':
+        if hasattr(reftr, 'stats'):
+            assert reftr.stats.sampling_rate == sr
+            ref_data = getDataWindow(Stream([reftr]), start=start, end=end, relative=relative)[0, :]
+        else:
+            ref_data = reftr
+        log.debug('calculate correlations and time shifts...')
+        return time_stretch_estimate(data, ref_trc=ref_data, tw=tw_mat,
                                  stretch_range=str_range, stretch_steps=nstr,
                                  sides=sides)
+    else:
+        assert len(tw_mat) == len(stretch)
+        tses = []
+        log.debug('calculate correlations and time shifts...')
+        for i in range(len(tw_mat)):
+            tw = tw_mat[i:i + 1]
+            st = stretch[i]
+            sim_mat = time_stretch_apply(data, st, single_sided=False)
+            ref_data = np.mean(sim_mat, axis=0)
+            tse = time_stretch_estimate(data, ref_trc=ref_data, tw=tw,
+                                 stretch_range=str_range, stretch_steps=nstr,
+                                 sides=sides)
+            tses.append(tse)
+        for i in ('corr', 'stretch'):
+            tse[i] = np.hstack([t[i] for t in tses])
+        i = 'sim_mat'
+        tse[i] = np.vstack([t[i] for t in tses])
+        return tse
 
 
 

@@ -52,9 +52,9 @@ def getPeriod(period):
     else:
         raise TypeError('Argument has invalid type.')
 
-def getTimeFormat(time, period):
+def getTimeFormat(time, period, stack=0):
     try:
-        if period == 'day' or period > 3600:
+        if period == 'day' or period >= 3600 or stack >= 3600:
             return time.year
         else:
             return '%s-%s' % (time.year, time.julday)
@@ -70,7 +70,7 @@ def getFilter(filter_):
 def getStack(time=None, period=None, stack=None):
     ret = ''
     if time is not None:
-        ret = '_%s' % getTimeFormat(time, period)
+        ret = '_%s' % getTimeFormat(time, period, stack)
 #        if hasattr(time, 'year'):
 #            ret += str(time.year)
 #        else:
@@ -101,13 +101,13 @@ class Data(object):
                                      '/prep/%s_%d_%03d')
         self.x_res = xcorr_results = results + '/xcorr%s' % xcorr_append
 
-        self.xcorr = xcorr_results + '/xcorr/%s_%s%s_%s' # period, correlation, filter, time ->1
+        self.xcorr = xcorr_results + '/xcorr/%s_%s%s_%s'  # period, correlation, filter, time ->1
         #self.x_filter = xcorr_results + '/filter/%s_%s%s_%s' # 1
-        self.x_stack = xcorr_results + '/stack/%s_%s%s_stack%s' # period, correlation, filter, number of stacks -> 2
-        self.x_plot = xcorr_results + '/plots/%s_%s%s_%s' # 1
-        self.x_plot_stack = xcorr_results + '/plots_stack/%s_%s%s_stack%s' # 2
+        self.x_stack = xcorr_results + '/stack/%s_%s%s_stack%s'  # period, correlation, filter, number of stacks -> 2
+        self.x_plot = xcorr_results + '/plots/%s_%s%s_%s'  # 1
+        self.x_plot_stack = xcorr_results + '/plots_stack/%s_%s%s_stack%s'  # 2
 
-        self.x_sac = xcorr_results + '/disp_sac/%s_%s.SAC'
+        self.x_sac = xcorr_results + '/sac/%s_%s.SAC'
 
         #self.x_ev_prep = self.x_ev_getstr = (data + '/xcorr%s' % xcorr_append +
         #                                      '/prep/%d')
@@ -124,9 +124,9 @@ class Data(object):
 #        self.x_plot_day_stack = xcorr_results + '/plots_stack/%s_stack_%s'
 #        self.x_hour = xcorr_results + '/hour/%s_hour_%d_%03d'
 
-        self.rf_events = data + '/receiver/events/%s_%s' + append # M5.5_events
+        self.rf_events = data + '/receiver/events/%s_%s' + append  # M5.5_events
         self.rf_results = results + '/receiver/results/%s' + append
-
+        self.rf_sac = self.rf_results + '/sac/%s_%s.SAC'
         self.client = client
         self.use_client = use_client
 
@@ -207,7 +207,7 @@ class Data(object):
                 ms = read(filename, starttime=date, endtime=endtime)
             elif endtime and date.julday != endtime.julday:
                 border = date.__class__(date.date) + 24 * 3600
-                ms1 = read(filename, starttime=date)#, endtime=border)
+                ms1 = read(filename, starttime=date)  #, endtime=border)
                 ms2 = self.getStream(border, station, component, endtime)
                 ms = ms1 + ms2
                 ms.merge()
@@ -264,7 +264,7 @@ class Data(object):
         return filename % (time.year)
 
 
-    def getX(self, cor, time=None, filter=None, period=24 * 3600, stack=None): #@ReservedAssignment
+    def getX(self, cor, time=None, filter=None, period=24 * 3600, stack=None):  #@ReservedAssignment
         """
         Get filename for xcorr of period.
 
@@ -281,7 +281,7 @@ class Data(object):
             #print (getPeriod(period), getCor(*cor), getFilter(filter), getStack(time, period, stack))
             return self.x_stack % (getPeriod(period), getCor(*cor), getFilter(filter), getStack(time, period, stack))
 
-    def getXEv(self, cor, time=None, filter=None, stack=None): #@ReservedAssignment
+    def getXEv(self, cor, time=None, filter=None, stack=None):  #@ReservedAssignment
         if stack is None:
             return self.xcorr % (getCor(*cor), getFilter(filter), time.year)
         else:
@@ -332,22 +332,22 @@ class Data(object):
 #        util.checkDir(filename)
 #        stream.write(filename, 'Q')
 
-    def readX(self, correlation, t1=None, t2=None, period=24 * 3600, select=True, **kwargs):
+    def readX(self, correlation, t1=None, t2=None, period=24 * 3600, select=True, stack=None, **kwargs):
         st = Stream()
         if t2 is None:
-            file_ = self.getX(correlation, t1, period=period, **kwargs) + '.QHD'
+            file_ = self.getX(correlation, t1, period=period, stack=stack, **kwargs) + '.QHD'
             if t1 is None:
                 st += read(file_)
             else:
                 for file_ in glob(file_):
                     st += read(file_)
         else:
-            if period == 'day' or period > 3600:
+            if period == 'day' or period >= 3600 or stack >= 3600:
                 iterator = yeargen(t1, t2)
             else:
                 iterator = timegen(t1, t2, dt=24 * 3600)
             for t in iterator:
-                file_ = self.getX(correlation, t, period=period, **kwargs) + '.QHD'
+                file_ = self.getX(correlation, t, period=period, stack=stack, **kwargs) + '.QHD'
                 try:
                     st += read(file_)
                 except (ValueError, IOError):
@@ -357,16 +357,16 @@ class Data(object):
                 st = st.select(expr='%r<st.starttime<%r' % (t1 - 0.1, t2 + 0.1))
         return st
 
-    def getPlotX(self, cor, time=None, filter=None, period=24 * 3600, stack=None): #@ReservedAssignment
+    def getPlotX(self, cor, time=None, filter=None, period=24 * 3600, stack=None):  #@ReservedAssignment
         if stack is None:
             return self.x_plot % (getPeriod(period), getCor(*cor), getFilter(filter), getTimeFormat(time, period))
-        else:# period, correlation, filter, number of stacks -> 2
+        else:  # period, correlation, filter, number of stacks -> 2
             return self.x_plot_stack % (getPeriod(period), getCor(*cor), getFilter(filter), getStack(time, period, stack))
 
 #    def getXDay(self, cor, time):
 #        """
 #        Get filename for xcorr of 1 day.
-#    
+#
 #        :param st1: first station
 #        :param st2: second station
 #        :param time: UTCDateTime object (year, julday and hour properties)
@@ -381,7 +381,7 @@ class Data(object):
 #    def getXDayStack(self, cor, dt):
 #        """
 #        Get filename for xcorr stack.
-#    
+#
 #        :param st1: first station
 #        :param st2: second station
 #        :param time: UTCDateTime object (year, julday and hour properties)
@@ -392,7 +392,7 @@ class Data(object):
 #    def writeXDay(self, stream, * args, **kwargs):
 #        """
 #        Write file for xcorr of 1 hour.
-#    
+#
 #        The parameters are passed to getXHour()
 #        :param stream: stream to write
 #        :param st1: first station
@@ -406,7 +406,7 @@ class Data(object):
 #    def writeXDayStack(self, stream, * args, **kwargs):
 #        """
 #        Write file for xcorr of 1 hour.
-#    
+#
 #        The parameters are passed to getXDaySrack()
 #        :param stream: stream to write
 #        :param st1: first station
@@ -447,7 +447,7 @@ class Data(object):
 #    def getXHour(self, st1, st2, time):
 #        """
 #        Get filename for xcorr of 1 hour.
-#    
+#
 #        :param st1: first station
 #        :param st2: second station
 #        :param time: UTCDateTime object (year, julday and hour properties)
@@ -458,7 +458,7 @@ class Data(object):
 #    def writeXHour(self, stream, * args, **kwargs):
 #        """
 #        Write file for xcorr of 1 hour.
-#    
+#
 #        The parameters are passed to getXHour()
 #        :param stream: stream to write
 #        :param st1: first station
@@ -604,7 +604,7 @@ class IPOC(Data):
         return ms
 
     def getRawStreamFromClient(self, starttime, endtime, station, component='Z'):
-        if component == 'all':
+        if component in ('all', 'ZNE', 'Z12'):
             component = '?'
         network = 'CX'
         channel = 'HH' + component
@@ -680,7 +680,7 @@ class IPOC(Data):
                 ms = read(file_, format='MSEED', starttime=date, endtime=endtime)
             elif endtime and date.julday != endtime.julday:
                 border = date.__class__(date.date) + 24 * 3600
-                ms1 = read(file_, starttime=date)#, endtime=border)
+                ms1 = read(file_, starttime=date)  #, endtime=border)
                 ms2 = self.getRawStream(border, station, component, endtime)
                 ms = ms1 + ms2
                 ms.merge()
@@ -748,7 +748,7 @@ class IPOCTest(Parkfield):
 
 
 def eventPicker(data, component='all', phase='P', window=(-100, 400),
-                filter=(None, None), new_sampling_rate=100, write=True, #@ReservedAssignment
+                filter=(None, None), new_sampling_rate=100, write=True,  #@ReservedAssignment
                 ** kwargs):
     """
     Pick window around onset of events from mseed files.

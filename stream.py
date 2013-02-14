@@ -391,6 +391,14 @@ class Stream(ObsPyStream):
         for tr in self:
             tr.filter2(*args, ** kwargs)
 
+    def gauss(self, * args, ** kwargs):
+        """
+        Gauss filter
+        """
+        log.info('Gauss-Filter stream %s: %s' % (self.hash, util.parameters()))
+        for tr in self:
+            tr.gauss(*args, ** kwargs)
+
     def downsample2(self, new_sampling_rate):
         """
         Wrapper for Stream.downsample
@@ -764,15 +772,15 @@ class Stream(ObsPyStream):
             tr.stats.channel = tr.stats.channel[:-1] + \
                 'LQT'['ZNE'.index(tr.stats.channel[-1])]
 
-    def rotateLQT2ZNE(self):
+    def rotateLQT2ZNE(self, usetheo=False):
         """
         Backrotate from LQT to ZNE.
 
         See obspy.signal.rotate_LQT_ZNE.
         """
         log.info('Back rotate stream %s' % (self.hash))
-        azi = self.select(component='L').getHI('lazi')
-        inci = self.select(component='L').getHI('linci')
+        azi = self.select(component='L').getHI('azi' if usetheo else 'lazi')
+        inci = self.select(component='L').getHI('inci'  if usetheo else 'linci')
         for i in range(len(self) // 3):
             L, Q, T = self[3 * i].data, self[3 * i + 1].data, self[3 * i + 2].data
             # Z, N, E = util.rotateLQT2ZNE(L, Q, T, azi[i], inci[i])
@@ -1485,10 +1493,10 @@ END""" % (start, end, spiking, cut1, cut2)
         for tr in self:
             tr.addZeros(secs_before, secs_after=secs_after)
 
-    def stretch(self, reftr=None, str_range=0.1, nstr=101, time_windows=None,
+    def stretch(self, reftr=None, stretch=None, str_range=0.1, nstr=101, time_windows=None,
                 sides='right'):
         from sito.noisexcorr import stretch as stretch_fun
-        result = stretch_fun(self, reftr=reftr, str_range=str_range, nstr=nstr,
+        result = stretch_fun(self, reftr=reftr, stretch=stretch, str_range=str_range, nstr=nstr,
                              time_windows=time_windows, sides=sides)
         return result
 

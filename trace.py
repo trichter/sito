@@ -168,7 +168,6 @@ class Trace(ObsPyTrace):
     def ifft(self):
         if not self.stats.is_fft:
             raise ValueError('Trace is no fft.')
-        print self.stats.npts_data
         self.data = np.real(ifft(self.data, self.stats.nfft,
                                  overwrite_x=False)[:self.stats.npts_data])
         self.stats.is_fft = False
@@ -232,6 +231,16 @@ class Trace(ObsPyTrace):
                 self.filter("highpass", freq=freqmin, corners=corners, zerophase=zerophase)
                 self.stats.filter += 'HP%4.2f,%d,%d' % (freqmin, corners, zerophase)
             self.data = fillArray(self.data, mask=mask, fill_value=0.)
+
+    def gauss(self, gauss, hp=None):
+        """
+        Gauss low pass filter
+        """
+        assert not self.stats.is_fft
+        import sito.rf
+        self.data = sito.rf.gauss(self.data, self.stats.sampling_rate, gauss, hp=hp)
+        self.stats.gauss = gauss
+        self.stats.filter += 'Gauss%4.2f' % gauss
 
     def downsample2(self, new_sampling_rate):
         """
