@@ -112,7 +112,7 @@ class Stations(AttribDict):
         else:
             return dist_km, dist_deg
 
-    def plot(self, basemap, annotate=True, **kwargs_in):
+    def plot(self, basemap, annotate=True, lsize='small', **kwargs_in):
         kwargs = dict(marker='o')
         kwargs.update(kwargs_in)
         for key, val in self.items():
@@ -121,7 +121,7 @@ class Stations(AttribDict):
             if annotate:
                 import matplotlib.pylab as plt
                 plt.annotate(key, (x, y), xytext=(3, 3),
-                             textcoords='offset points')
+                             textcoords='offset points', size=lsize)
 
 def IPOCStations():
     return Stations.read('/home/richter/Data/stations_ipoc.txt')

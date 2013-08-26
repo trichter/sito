@@ -1,10 +1,9 @@
 sito - Scripts for receiver function analysis and
        ambient noise cross-correlation - based on ObsPy (http://obspy.org/)
 copyright:
-    2010-2012 Tom Richter (richter@gfz-potsdam.de)
+    2010-2013 Tom Richter (richter@gfz-potsdam.de)
 license:
-    GNU Lesser General Public License, Version 3
-    (http://www.gnu.org/copyleft/lesser.html)
+    MIT license
 
 These scripts were written for my work at GFZ Potsdam. They are tested and work
 well with data from the IPOC project I am working on.

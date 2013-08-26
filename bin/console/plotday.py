@@ -12,7 +12,7 @@ parser.add_argument('file_station',
 parser.add_argument('date', nargs='?', default=None, type=UTC,
                    help='if first argument is station: date')
 
-parser.add_argument('-a', '--absolute-scale', type=float,
+parser.add_argument('-a', '--absolute-scale', type=float,  # default=0.02,
                    help='display with different scale')
 parser.add_argument('-r', '--relative-scale', type=float,
                    help='display with different relative scale - '
@@ -23,8 +23,13 @@ parser.add_argument('-s', '--save',
 parser.add_argument('-x', '--xcorr-append',
                    help='dont plot raw data and pass this argument to Data object')
 
-parser.add_argument('-c', '--component', default='Z',
-                   help='component to plot, default: Z')
+parser.add_argument('-c', '--channel', default='HHZ',
+                   help='channel to plot, default: HHZ')
+
+parser.add_argument('--component', default=None,
+                   help='component to plot, depr., use channel')
+
+
 
 parser.add_argument('-d', '--downsample', default=1,
                    help='downsample to this sampling rate, default: 1')
@@ -66,18 +71,21 @@ else:
         raise argparse.ArgumentError('Not a valid station name')
     day = UTC(args.date)
     if args.xcorr_append is None:
-        stream = data.getRawStream(day, station, component=args.component)
+        #stream = data.getRawStream(day, station, component=args.component)
+        stream = data.getRawStreamFromClient(day, day + 24 * 3600, station, component=args.component, channel=args.channel)
     else:
         stream = data.getStream(day, station, component=args.component)
     if args.absolute_scale is None and args.relative_scale is None:
         kwargs['absolutescale'] = 0.0005
 
 tr = stream[0]
+tr.stats.filter = ''
 if args.frequency is False:
     if tr.stats.is_fft:
         tr.ifft()
     print tr
-    tr.plotTrace(component=args.component, **kwargs)
+    #tr.plotTrace(component=args.component, **kwargs)
+    tr.plotTrace(**kwargs)
 else:
 #    if not tr.stats.is_fft:
 #        tr.fft(1024)

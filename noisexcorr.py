@@ -129,7 +129,7 @@ def _prepare_stream(stream, output_file,
             use_this_filter_after_whitening=None,
             discard=0.8 * 24 * 3600,
 #            edge_smooth=(0, 0),
-            trim=(0, 0)):
+            trim=None):
     for tr in stream:
         tr.data = tr.data.astype('float64')
     # use special parameters for merging, because sometimes there is a
@@ -167,7 +167,7 @@ def _prepare_stream(stream, output_file,
 #            tr_sm.data *= 1 + np.cos(np.linspace(0, np.pi, len(tr_sm)))
 #            tr_sm = tr.select(tsmooth2, tzeros2)
 #            tr_sm.data *= 1 + np.cos(np.linspace(np.pi, 2 * np.pi, len(tr_sm)))
-    if freq_domain and normalize is None and trim == (0, 0):
+    if freq_domain and normalize is None and not trim:
         stream.fft()
     if whitening:
         if use_this_filter_after_whitening:
@@ -175,9 +175,11 @@ def _prepare_stream(stream, output_file,
         stream.spectralWhitening(smoothi=whitening, apply_filter=filter)
     if normalize:
         stream.timeNorm(method=normalize, param=param_norm)
-    if trim != (0, 0):
+    if trim and trim == 'day':
         for tr in stream:
-            tr.trim(tr.stats.starttime + trim[0], tr.stats.endtime - trim[1])
+            t = tr.stats.starttime + 3600
+            date = t.__class__(t.date)
+            tr.trim(date, date + 24 * 3600)
     if freq_domain and (normalize is not None or trim != (0, 0)):
             stream.fft()
     if output_file:
@@ -309,7 +311,8 @@ def prepare(data, stations, t1, t2, component='all', use_floating_stream=True,
     if pool:
         async_results = []
     if use_client:
-        kwargs['trim'] = (60, 60)
+        if 'trim' not in kwargs:
+            kwargs['trim'] = 'day'
         for station in ProgressBar()(stations):
             for t_day in daygen(t1, t2):
         #for (station, t_day) in ProgressBar()(itertools.product(stations, daygen(t1, t2))):
@@ -459,8 +462,12 @@ def prepare(data, stations, t1, t2, component='all', use_floating_stream=True,
 #        elif test:
 #            return xcorr
 
-def _noisexcorrf_traces(tr1, tr2, shift_sec, correlation):
+def _noisexcorr_traces(tr1, tr2, shift_sec, correlation):
     sr = tr1.stats.sampling_rate
+    if 'is_fft' not in tr1.stats or not tr1.stats.is_fft:
+        tr1.fft()
+    if 'is_fft' not in tr2.stats or not tr2.stats.is_fft:
+        tr2.fft()
     cor = xcorrf(tr1.data, tr2.data, int(shift_sec * sr), freq_domain=True,
                  N1=tr1.stats.npts_data, N2=tr2.stats.npts_data,
                  stdev1=tr1.stats.stdev, stdev2=tr2.stats.stdev)
@@ -510,9 +517,10 @@ def noisexcorrf(data, correlations, t1, t2, shift_sec, period=24 * 3600,
 #        if not autocorr:
 #            data2 = FloatingStream(data, t1, station2, 0, component=comp2, period=period)
         xcorr = [] if pool else Stream()
+        stream1 = None
         for t in timegen(t1, t2, 24 * 3600):
             if len(xcorr) > 0 and (t - period).date != t.date and (
-                    (period > 3600 and t.julday == 1) or period <= 3600):
+                    (period >= 3600 and t.julday == 1) or period < 3600):
                 data.writeX(_get_async_resutls(xcorr) if pool else xcorr,
                             correlation, t - period, period=period)
                 xcorr = [] if pool else Stream()
@@ -521,11 +529,19 @@ def noisexcorrf(data, correlations, t1, t2, shift_sec, period=24 * 3600,
                 log.debug('No data for %s %s' % (str(correlation), t))
                 continue
             try:
-                stream1 = data.getStream(t, station1, component=comp1)
+                if overlap == 0 or stream1 is None:
+                    stream1 = data.getStream(t, station1, component=comp1)
+                else:
+                    stream1 = stream1 + data.getStream(t, station1, component=comp1)
+                    stream1.merge()
+                    stream1.trim(t - overlap, None)
                 if autocorr:
                     stream2 = stream1
                 else:
-                    stream2 = data.getStream(t, station2, component=comp2)
+                    if overlap == 0:
+                        stream2 = data.getStream(t, station2, component=comp2)
+                    else:
+                        raise NotImplementedError()
             except ValueError:
                 log.warning('Could not load data for %s %s' % (str(correlation), t))
                 continue
@@ -536,41 +552,38 @@ def noisexcorrf(data, correlations, t1, t2, shift_sec, period=24 * 3600,
             tr2 = stream2[0]
             if tr1.stats.sampling_rate != tr2.stats.sampling_rate:
                 raise ValueError('Sampling rate is different.')
-            # check data
-            if tr1.stats.npts != tr2.stats.npts:
-                log.info('Discard data because of different npts %d vs %d' % (tr1.stats.npts, tr2.stats.npts))
-                continue
-            log.debug ('Calculating xcorr for %s' % t)
-            # original implementation only ok for period == 'day'
             if period == 24 * 3600:
-                assert tr1.stats.is_fft and tr2.stats.is_fft
+                # check data
+                if tr1.stats.npts != tr2.stats.npts:
+                    log.info('Discard data because of different npts %d vs %d' % (tr1.stats.npts, tr2.stats.npts))
+                    continue
+                log.debug ('Calculating xcorr for %s' % t)
+                # original implementation only ok for period == 'day'
                 args = (tr1, tr2, shift_sec, correlation)
                 if pool:
                     if len(xcorr) >= max_preload:
                         xcorr[-max_preload].wait()
-                    xcorr.append(pool.apply_async(_noisexcorrf_traces, args))
+                    xcorr.append(pool.apply_async(_noisexcorr_traces, args))
                 else:
-                    xcorr.append(_noisexcorrf_traces(*args))
+                    xcorr.append(_noisexcorr_traces(*args))
             # new implementation for all other periods
             else:
                 if tr1.stats.is_fft:
                     tr1.ifft()
                 if tr2.stats.is_fft:
                     tr2.ifft()
-                t1_ = t
-                while t1_ < t + 24 * 3600 - period + 0.1:
+                t1_ = tr1.stats.starttime
+                while t1_ + period <= tr1.stats.endtime + 1:
                     t2_ = t1_ + period
                     tr1_ = tr1.slice(t1_, t2_)
                     tr2_ = tr2.slice(t1_, t2_)
-                    tr1_.fft()
-                    tr2_.fft()
                     args = (tr1_, tr2_, shift_sec, correlation)
                     if pool:
                         if len(xcorr) >= max_preload:
                             xcorr[-max_preload].wait()
-                        xcorr.append(pool.apply_async(_noisexcorrf_traces, args))
+                        xcorr.append(pool.apply_async(_noisexcorr_traces, args))
                     else:
-                        xcorr.append(_noisexcorrf_traces(*args))
+                        xcorr.append(_noisexcorr_traces(*args))
                     t1_ = t1_ + period - overlap
         if len(xcorr) > 0:
             data.writeX(_get_async_resutls(xcorr) if pool else xcorr,
@@ -696,7 +709,7 @@ def filter(data, correlations, filters, stack=None, period=24 * 3600):  #@Reserv
                 st2.filter2(*filter_)
                 data.writeX(st2, correlation, st[0].stats.endtime, filter=filter_, period=period, stack=stack)
 
-def stack(data, correlations, dt= -1, filters=None, period=24 * 3600, shift=None, onefile=False, yearfiles=False):
+def stack(data, correlations, dt=-1, filters=None, period=24 * 3600, shift=None, onefile=False, yearfiles=False):
     #t1 = t1.__class__(t1.date)
     #t2 = t2.__class__(t2.date)
     log.info('Stack correlations: %s' % util.parameters())
@@ -757,7 +770,7 @@ def stack(data, correlations, dt= -1, filters=None, period=24 * 3600, shift=None
 #            stream_day.append(mean_oneday)
 #        data.writeXDay(stream_day, correlation, t_day)
 
-def stack_day(data, correlations, dt= -1, start=None, onefile=False):
+def stack_day(data, correlations, dt=-1, start=None, onefile=False):
     #t1 = t1.__class__(t1.date)
     #t2 = t2.__class__(t2.date)
     log.info('Stack day correlations: %s' % util.parameters())
@@ -1019,6 +1032,8 @@ def stretch(stream, reftr=None, stretch=None, start=None, end=None, relative='st
         raise ValueError('Wrong format for time_window')
     log.debug('getting data...')
     data = getDataWindow(stream, start=start, end=end, relative=relative)
+    data[np.isnan(data)] = 0  # bug fix
+    data[np.isinf(data)] = 0
     if reftr != 'alternative':
         if hasattr(reftr, 'stats'):
             assert reftr.stats.sampling_rate == sr

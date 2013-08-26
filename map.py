@@ -10,6 +10,9 @@ from osgeo import gdal
 import scipy as sp
 import scipy.interpolate
 import os.path
+import cPickle as pickle
+from scipy.ndimage.filters import gaussian_filter
+
 def createColormapFromGPF(file_):
     data = sp.loadtxt(file_)
     cdict = {'red': np.take(data, (0, 1, 1), axis=1),
@@ -56,25 +59,37 @@ def plotTrench(map_, lons, lats, size=10000, sep=50000, side=1, **kwargs):
     plt.gca().add_collection(col)
 
 
+def get_slipmodel():
+    fname = '/home/richter/Data/bernd_slip/jgrb17176-sup-0002-ds01.txt'
+    import numpy
+    data = numpy.loadtxt(fname, skiprows=1)
+    lat = data[:, 0]
+    lon = data[:, 1]
+    z = data[:, 3]
+    #return (lon, lat, z) + ((0.5, 1, 1.5, 2, 2.5, 3), 'gray')
+    return (lon, lat, z) + ((0.5, 1, 1.5, 2, 2.5, 3), 'red')
+
 def createFancyIPOCMap(**kwargs_in):
     kwargs = dict(figsize=(19 / 2.54, 27 / 2.54),
                   margin=(0.1, 0.075, 0.65, 0.85),
                   cities='ipoc', trench='ipoc',
                   earthquake='Tocopilla',
+                  #earthquake='Tocopilla_beachball',
                   #elevation='/home/richter/Data/map/SRTM_nchile_250m.tif',
-                  elevation='/home/richter/Data/map/nchile.grd',
+                  elevation='/home/richter/Data/map/nchile_228m.grd',
                   #elevation='/home/richter/Data/map/CleanTopo2_nchile.tif',
                   #colormap='/home/richter/Data/cm/wiki-2.0.gpf',
                   colormap='/home/richter/Data/cm/bath_111_tpglarm.gpf',
                   #colormap=cm.GMT_globe
+                  slip=get_slipmodel()
                   )
     kwargs.update(kwargs_in)
     return createIPOCMap(**kwargs)
 
 def createIPOCMap(**kwargs_in):
-    dict_basemap_ipoc = dict(lat_0= -21, lon_0= -69.5,
+    dict_basemap_ipoc = dict(lat_0=-21, lon_0=-69.5,
                              projection='stere', resolution='h')
-    kwargs = dict(ll=(-25, -72), ur=(-17, -68),
+    kwargs = dict(ll=(-25, -72), ur=(-17.5, -68),
                   figsize=(15 / 2.54, 18 * 1.5 / 2.54),
                   margin=(0.15, 0.075, 0.7, 0.85),
                   dict_basemap=dict_basemap_ipoc,
@@ -95,7 +110,7 @@ def createIPOCMap(**kwargs_in):
 def createRFEventMap(circles=(27, 93), circles_around=None, **kwargs_in):
     #http://matplotlib.sourceforge.net/basemap/doc/html/api/basemap_api.html
     w = np.pi * 6371 * 1000 * 186 / 180.
-    dict_basemap_ipoc = dict(lat_0= -21, lon_0= -69.5,
+    dict_basemap_ipoc = dict(lat_0=-21, lon_0=-69.5,
                              projection='aeqd', resolution='c',
                              width=w,
                              height=w)
@@ -132,7 +147,6 @@ def createRFEventMap(circles=(27, 93), circles_around=None, **kwargs_in):
 #            plt.plot(X, Y, 'k')
     return m
 
-
 def createMap(ll=None, ur=None, figsize=None, margin=None,
                ax=None,
                dict_basemap=None,
@@ -140,11 +154,14 @@ def createMap(ll=None, ur=None, figsize=None, margin=None,
                mapboundary=True, grid=False, grid_labels=True,
                watercolor='#ADD8E6', fillcontinents='coral', use_lsmask=False,
                stations=None, cities=None, trench=None, earthquake=None,
-               elevation=None, elevation_args=(7000, 500, True),
+               slip=None,
+               elevation=None, elevation_args=(7000, 500, True), elevation_offset=None,
                shaded=True, shaded_args=(315, 45, 0.2),
                colormap=None,
                title=None,
-               show=True, save=None):
+               show=True, save=None, station_markersize=4,
+               elev_oceans=True, grid_lw=None, spines_lw=None, dpi=None, station_labelsize='small',
+               loffset=None):
     if figsize:
         fig = plt.figure(figsize=figsize)
         if margin:
@@ -152,7 +169,7 @@ def createMap(ll=None, ur=None, figsize=None, margin=None,
     else:
         fig = None
     if dict_basemap is None:
-        dict_basemap = dict(llcrnrlon= -180, llcrnrlat= -60, urcrnrlon=180,
+        dict_basemap = dict(llcrnrlon=-180, llcrnrlat=-60, urcrnrlon=180,
                             urcrnrlat=60,
                             lat_0=0, lon_0=0,
                             projection='hammer', resolution='l')
@@ -171,32 +188,64 @@ def createMap(ll=None, ur=None, figsize=None, margin=None,
     if coastlines:
         m.drawcoastlines(linewidth=lw)
     if mapboundary:
-        m.drawmapboundary(fill_color=watercolor, zorder= -10)
-    if grid:
+        m.drawmapboundary(fill_color=watercolor, zorder=-10)
+    print 1
+    if grid or grid_labels:
+        if not grid_lw:
+            grid_lw = lw
         if grid is True:
             grid = 1.
-        if grid_labels:
+        #JGR
+        if grid and grid_labels:
             m.drawparallels(np.arange(-90., 90., grid),
-                            labels=[True, True, False, False], linewidth=lw)
+                            labels=[True, True, False, False], linewidth=grid_lw,
+                            xoffset=loffset, yoffset=loffset)
             m.drawmeridians(np.arange(0., 390., grid),
-                            labels=[False, False, True, True], linewidth=lw)
-        else:
+                            labels=[False, False, True, True], linewidth=grid_lw,
+                            xoffset=loffset, yoffset=loffset)
+        elif grid:
             m.drawparallels(np.arange(-90., 90., grid),
-                            labels=[False, False, False, False], linewidth=lw)
+                            labels=[False, False, False, False], linewidth=grid_lw)
             m.drawmeridians(np.arange(0., 390., grid),
-                            labels=[False, False, False, False], linewidth=lw)
+                            labels=[False, False, False, False], linewidth=grid_lw)
     if stations:
-        stations.plot(m, mfc='b', ms=5, zorder=10)
+        stations.plot(m, mfc='b', ms=station_markersize, zorder=10, lsize=station_labelsize)
+    if slip:
+        if len(slip) == 4:
+            x, y, z, levels = slip
+            colors_slip = None
+        else:
+            x, y, z, levels, colors_slip = slip
+        x, y = zip(*[m(lon, lat) for lon, lat in zip(x, y)])
+        if len(np.shape(z)) == 2:
+            grid_x = x
+            grid_y = y
+        else:
+            grid_x = np.arange(min(x), max(x) - 0.15 * (max(x) - min(x)), 100)  #VERY dirty hack to cut of parts of the slip model
+            grid_y = np.arange(min(y), max(y), 100)
+            #grid_x, grid_y = np.mgrid[min(x):max(x):100j, min(y):max(y):100j]
+            z = scipy.interpolate.griddata((x, y), z, (grid_x[None, :], grid_y[:, None]), method='cubic')
+
+        plt.gca().contour(grid_x, grid_y, z, levels, colors=colors_slip, lw=lw)
     if earthquake == 'Tocopilla':
         x, y = m(-70.06, -22.34)
         x2, y2 = m(-69.5, -24.2)  #x2, y2 = m(-70.4, -21.5)
-        m.plot((x, x2), (y, y2), 'k-', lw=1)  #line
-        m.plot((x), (y), 'r*', ms=15, zorder=10)  #epicenter
-        b = Beach([358, 26, 109], xy=(x2, y2), width=50000, linewidth=1)
+        m.plot((x, x2), (y, y2), 'k-', lw=lw)  #line
+        m.plot((x), (y), 'r*', ms=2 * station_markersize, zorder=10)  #epicenter
+        b = Beach([358, 26, 109], xy=(x2, y2), width=50000, linewidth=lw)
+        b.set_zorder(10)
+        plt.gca().add_collection(b)
+        plt.annotate('14 Nov. 2007\n M 7.7', (x2, y2), xytext=(15, 0),  # 22
+                     textcoords='offset points', va='center', size=station_labelsize)
+    elif earthquake == 'Tocopilla_beachball':
+        #x, y = m(-70.06, -22.34)
+        x2, y2 = m(-69.5, -24.2)  #x2, y2 = m(-70.4, -21.5)
+        b = Beach([358, 26, 109], xy=(x2, y2), width=50000, linewidth=lw)
         b.set_zorder(10)
         plt.gca().add_collection(b)
         plt.annotate('14 Nov. 2007\n M 7.6', (x2, y2), xytext=(22, 0),
                      textcoords='offset points', va='center')
+
     elif earthquake == 'Tocopilla_position':
         x, y = m(-70.06, -22.34)
         m.plot((x), (y), 'r*', ms=15, zorder=10)  #epicenter
@@ -213,10 +262,13 @@ def createMap(ll=None, ur=None, figsize=None, margin=None,
                 x, y, mag, date = xs[i], ys[i], earthquake[2][i], earthquake[3][i]
                 plt.annotate('M%.1f\n%s' % (mag, date.date), xy=(x, y), xytext=(10, 0),
                            textcoords='offset points', va='center')
+    print 2
     if elevation:
         vmax, resol, bar = elevation_args
         geo = gdal.Open(elevation)
         topoin = geo.ReadAsArray()
+        if elevation_offset:
+            topoin[topoin > 0] += elevation_offset
         coords = geo.GetGeoTransform()
         nlons = topoin.shape[1]; nlats = topoin.shape[0]
         delon = coords[1]
@@ -227,10 +279,26 @@ def createMap(ll=None, ur=None, figsize=None, margin=None,
         # (so that data is oriented in increasing latitude,
         # as transform_scalar requires).
         topoin = np.ma.masked_less(topoin[::-1, :], -11000)
+        #topoin = gaussian_filter(topoin, 1)
         #topoin = array[::-1, :]
         # transform DEM data to a 250m native projection grid
-        nx = int((m.xmax - m.xmin) / resol) + 1
-        ny = int((m.ymax - m.ymin) / resol) + 1
+
+#            if True:
+#                x, y = m(*np.meshgrid(lons, lats))
+#                m.contourf(x, y, topoin, 100, cm=colormap)
+#                if save:
+#                    plt.savefig(save)
+#                return
+        if resol:
+            if resol < 25:
+                nx = resol * len(lons)
+                ny = resol * len(lats)
+            else:
+                nx = int((m.xmax - m.xmin) / resol) + 1
+                ny = int((m.ymax - m.ymin) / resol) + 1
+        else:
+            nx = len(lons)
+            ny = len(lats)
         topodat = m.transform_scalar(topoin, lons, lats, nx, ny, masked=True)
         if elevation == 'CleanTopo2_nchile.tif':
             # -10,701m(0) to 8,248m(18948)
@@ -242,20 +310,28 @@ def createMap(ll=None, ur=None, figsize=None, margin=None,
             azdeg, altdeg, fraction = shaded_args
             ls = colors.LightSource(azdeg=azdeg, altdeg=altdeg)
             # convert data to rgb array including shading from light source.
-            rgb = colormap(0.5 * topodat / vmax + 0.5)
+            if elev_oceans:
+                rgb = colormap(0.5 * topodat / vmax + 0.5)
+            else:
+                rgb = colormap(topodat / vmax)
             rgb1 = ls.shade_rgb(rgb, elevation=topodat, fraction=fraction)
             rgb[:, :, 0:3] = rgb1
             m.imshow(rgb, zorder=1)
         else:
-            m.imshow(topodat, cmap=colormap, zorder=1, vmin= -vmax, vmax=vmax)
+            if elev_oceans:
+                m.imshow(topodat, interpolation='bilinear', cmap=colormap, zorder=1, vmin=-vmax, vmax=vmax)
+            else:
+                m.imshow(topodat, interpolation='bilinear', cmap=colormap, zorder=1, vmin=0, vmax=vmax)
+
         if bar:
             ax = plt.gca()
             fig = plt.gcf()
-            cb_ax = fig.add_axes([0.8, 0.3, 0.02, 0.4])
+            #cb_ax = fig.add_axes([0.8, 0.3, 0.02, 0.4])
+            cb_ax = fig.add_axes([0.82, 0.3, 0.02, 0.4])
             cb = colorbar.ColorbarBase(cb_ax, cmap=colormap,
-                                       norm=colors.Normalize(vmin= -vmax,
+                                       norm=colors.Normalize(vmin=-vmax,
                                                              vmax=vmax))
-            cb.set_label('elevation and bathymetry')
+            #cb.set_label('elevation and bathymetry')
             ticks = (np.arange(20) - 10) * 1000
             ticks = ticks[np.abs(ticks) <= vmax]
             cb.set_ticks(ticks)
@@ -267,33 +343,41 @@ def createMap(ll=None, ur=None, figsize=None, margin=None,
         lons = [-70.4, -70.2, -70.1525, -68.933333, -70.216667, -70.333333]
         lats = [-23.65, -22.096389, -20.213889, -22.466667, -19.6, -18.483333]
         x, y = m(lons[:len(cities)], lats[:len(cities)])
-        m.plot(x, y, 'o', ms=5, mfc='w', mec='k',
+        m.plot(x, y, 'o', ms=station_markersize, mfc='w', mec='k',
                zorder=10)
         for i in range(len(cities)):
             if 'Anto' in cities[i]:
                 plt.annotate(cities[i], (x[i], y[i]), xytext=(5, 0),
-                                     textcoords='offset points', va='top')
+                                     textcoords='offset points', va='top',
+                                     size=station_labelsize)
             else:
                 plt.annotate(cities[i], (x[i], y[i]), xytext=(-5, 0),
-                                     textcoords='offset points', ha='right')
+                                     textcoords='offset points', ha='right',
+                                     size=station_labelsize)
     elif cities == 'Tocopilla':
         lons = [-70.2]
         lats = [-22.096389]
         x, y = m(lons, lats)
-        m.plot(x, y, 'o', ms=5, mfc='w', mec='k',
+        m.plot(x, y, 'o', ms=station_markersize, mfc='w', mec='k',
                zorder=10)
         plt.annotate('Tocopilla', (x[0], y[0]), xytext=(5, 0),
-                             textcoords='offset points')
+                             textcoords='offset points',
+                             size=station_labelsize)
 
     if trench == 'ipoc':
         coords = np.transpose(np.loadtxt('/home/richter/Data/map/'
                                          'nchile_trench.txt'))
+        import matplotlib as mpl  # hack JGR
+        mpl.rcParams.update({'lines.linewidth':1})
         plotTrench(m, coords[0, :], coords[1, :], facecolors='k',
                    edgecolors='k')
+    if spines_lw:
+        for l in plt.gca().spines.values():
+            l.set_linewidth(spines_lw)
     if title:
         plt.title(title, y=1.05)
     if save:
-        plt.savefig(save)
+        plt.savefig(save, dpi=dpi)
     if show:
         plt.show()
     return m

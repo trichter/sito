@@ -34,8 +34,8 @@ def main():
     print correlations
 
     method = 'FINAL_filter4-6_1bit_auto'
-    method = 'FINAL_filter4-6_1bit_auto_3C'
-    method = 'FINAL_filter3-5'
+    #method = 'FINAL_filter4-6_1bit_auto_3C'
+    #method = 'FINAL_filter3-5'
 
     data = IPOC(xcorr_append='/' + method, use_local_LVC=False)
     data.setXLogger('_' + method)
@@ -58,7 +58,7 @@ def main():
 #                      plot_stack=True, plot_psd=False, add_to_title='', downsample=None)
 
     plotXcorrs(data, correlations, t1, t2, start= -20, end=20, plot_overview=True, plot_years=False, use_dlognorm=False,
-                      plot_stack=True, plot_psd=False, add_to_title='', downsample=None, ext='_hg.png', vmax=0.1)
+                      plot_stack=True, plot_psd=False, add_to_title='', downsample=None, ext='_hg.pdf', vmax=0.02)
 
 #    stack(data, correlations, dt= -1)
     #stack(data, correlations, dt=60 * 60, period=5 * 60)

@@ -548,6 +548,9 @@ class IPOC(Data):
         self.exception = exception
         if self.client in (True, 'sec24c74', 'gfz'):
             self.initClient()
+        elif self.client == 'geofon':
+            from obspy.arclink import Client
+            self.initClient(client=Client())
             #example usage: client.getWaveform('CX', 'PB01', '', 'WDI', '2009-01-01', '2009-01-02')
 
 
@@ -603,11 +606,12 @@ class IPOC(Data):
             raise ValueError('No traces in stream returned by seishub.')
         return ms
 
-    def getRawStreamFromClient(self, starttime, endtime, station, component='Z'):
+    def getRawStreamFromClient(self, starttime, endtime, station, component='Z', channel=None):
         if component in ('all', 'ZNE', 'Z12'):
             component = '?'
         network = 'CX'
-        channel = 'HH' + component
+        if not channel:
+            channel = 'HH' + component
         location = ''
         if station == 'LVC':
             #channel 1 2 support

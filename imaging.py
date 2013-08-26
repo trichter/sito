@@ -41,7 +41,7 @@ def getPublicationFigure(axes=None, width=10, ratio=0.618, margin=None, fontsize
     Return Figure instance.
     """
     if not margin:
-        margin = [1., 0.1, 1., 0.1] #left, rigth, bottom, top
+        margin = [1., 0.1, 1., 0.1]  #left, rigth, bottom, top
     return getFigure(axes=axes, width=width, ratio=ratio, margin=margin, fontsize=fontsize, labelsize=labelsize, backend=backend, usetex=usetex, distiller=distiller)
 
 def getFigure(axes=None, width=30, ratio=0.618, margin=None, fontsize=20, labelsize=18, backend='png', usetex=False, distiller='ghostscript'):
@@ -60,9 +60,9 @@ def getFigure(axes=None, width=30, ratio=0.618, margin=None, fontsize=20, labels
     #fig_width_pt =   # Get this from LaTeX using \showthe\columnwidth
     #inches_per_pt = 1.0/72.27               # Convert pt to inch
     if not margin:
-        margin = [2., 1., 2., 1.] #left, rigth, bottom, top
+        margin = [2., 1., 2., 1.]  #left, rigth, bottom, top
     fig_width = width / 2.54  # width in inches
-    fig_height = width / 2.54 * ratio # height in inches
+    fig_height = width / 2.54 * ratio  # height in inches
     margin = np.array(margin)
     margin[:2] = margin[:2] / width  # relative to fig size
     margin[2:] = margin[2:] / width / ratio
@@ -83,7 +83,7 @@ def getFigure(axes=None, width=30, ratio=0.618, margin=None, fontsize=20, labels
         #'path.simplify_threshold' : 0.1,
         #'ps.useafm'         : True,    # use of afm fonts, results in small files
         'ps.papersize': 'auto',
-        'ps.usedistiller': distiller    # can be: None, ghostscript or xpdf
+        'ps.usedistiller': distiller  # can be: None, ghostscript or xpdf
 
             # Experimental: may produce smaller files.
             # xpdf intended for production of publication quality files,
@@ -99,10 +99,10 @@ def getFigure(axes=None, width=30, ratio=0.618, margin=None, fontsize=20, labels
     if not axes:
         # ax = fig.add_axes([margin[0],margin[2],plot_width,plot_height])
         fig.add_axes([margin[0], margin[2], plot_width, plot_height])
-    else: #only horzontal split
+    else:  #only horzontal split
         if not isinstance(axes[0], list):
             axes = [axes, [1]]
-        if len(axes) == 2: # horizontal and vertical split
+        if len(axes) == 2:  # horizontal and vertical split
             Nx = len(axes[0])
             Ny = len(axes[1])
             axes[0] = [i * plot_width for i in axes[0]]
@@ -165,6 +165,7 @@ def _insert_zeros(stream, data, min_delta=None):
         min_delta = np.median(deltas)
     indices = np.nonzero(deltas - min_delta >= 1)
     nums = (np.round(deltas[indices] / min_delta) - 1).astype('int')
+    #print starttimes, deltas, indices, nums
     counter = 0
     for i in range(len(nums)):
         index = indices[0][i]
@@ -220,27 +221,27 @@ def plotPhases(ms, ax, plotphases='some'):
 class Plot(object):
     def __init__(self, stream, start=None, end=None, relative='starttime',
                  rel_label='relative', component='all',
-                 filter=None, downsample=None, #@ReservedAssignment
+                 filter=None, downsample=None,  #@ReservedAssignment
                  xaxis='data', yaxis='num', dateformatter='%y-%m-%d',
                  reverse_x=False, reverse_y=False, minor_x=True, minor_y=True,
                  xlabel=None, ylabel=None,
-                 color='kk', topcolor='white', botcolor='white', fast=False, #@UnusedVariable
+                 color='kk', topcolor='white', botcolor='white', fast=False,  #@UnusedVariable
                  scale=1., absolutescale=None, sumscale=2.,
                  imshow=False, cmap=None, colorbar=True, use_dlognorm=False,
-                 alpha=None, #@UnusedVariable
+                 alpha=None,  #@UnusedVariable
                  vmax=None, vmin=None, cmax=1e-5,
                  plotsum=False, order=None, plotphases=False,
                  figtitle='station component sc:scale', title_xpos=0.5,
                  title_horalign='center', title_in_axis=False, fancy_box=False, box_trans='ax',
                  box_ax=None, box_fs=14,
-                 show=True, save=False, #publication=False,#delete=False,
+                 show=True, save=False,  #publication=False,#delete=False,
                  fig=None, ax=None, connect_event=True,
-                 plotinfo=(), usehardticks='', #plotinfo_width=0.1, #@UnusedVariable
-                 plotlabel=None, ax_info=None, #@UnusedVariable
-                 plotinfowhere=None, plotinfodicts=None, #@UnusedVariable
-                 plot_stack=False, stack_lim=None, plot_psd=False, #@UnusedVariable
-                 psd_scale='time', psd_prop=(4096, True, None), #@UnusedVariable
-                 annotate=None #@UnusedVariable
+                 plotinfo=(), usehardticks='',  #plotinfo_width=0.1, #@UnusedVariable
+                 plotlabel=None, ax_info=None,  #@UnusedVariable
+                 plotinfowhere=None, plotinfodicts=None,  #@UnusedVariable
+                 plot_stack=False, stack_lim=None, plot_psd=False,  #@UnusedVariable
+                 psd_scale='time', psd_prop=(4096, True, None),  #@UnusedVariable
+                 annotate=None  #@UnusedVariable
                  ):
         """
         Plot stream...
@@ -336,7 +337,7 @@ class Plot(object):
         if self.plotinfowhere is None:
             self.plotinfowhere = ('right',) * lenplotinfo
         if plotinfodicts is None:
-            plotinfodicts = [dict(pad=0, size=0.8) for i in range(len(self.plotinfo))] #@UnusedVariable
+            plotinfodicts = [dict(pad=0, size=0.8) for i in range(len(self.plotinfo))]  #@UnusedVariable
         if plot_stack:
             self.plotinfo += ('sum',)
             self.plotlabel += ('stack',)
@@ -471,7 +472,7 @@ class Plot(object):
         if figtitle is not None:
             figtitle = figtitle.replace('station', stream[0].stats.station)
             figtitle = figtitle.replace('component', component)
-            figtitle = figtitle.replace('scale', '%f' % (1. / scale))#str(scale))
+            figtitle = figtitle.replace('scale', '%f' % (1. / scale))  #str(scale))
             try:
                 starttime = stream[0].stats.starttime + 0.5
                 figtitle = figtitle.replace('time', '%s' % starttime)
@@ -881,7 +882,7 @@ class Plot(object):
                     ax_info[i].set_yticklabels(['0', '', '50', ''])
                 elif 'time' in info and 'time' in usehardticks:
                     yeardata = ax_info[i].get_lines()[0].get_ydata()
-                    from math import ceil #@Reimport
+                    from math import ceil  #@Reimport
                     years = range(int(ceil(yeardata[0])), int(yeardata[-1]) + 1)
                     while len(years) > 5:
                         years = years[::2]
@@ -1014,7 +1015,7 @@ def plotComb(stream, *args, **kwargs_in):
         ax1, ax2 = fig.axes[0], fig.axes[1]
     pl2 = Plot(stream, *args, ax=ax2, imshow=True, colorbar=False, **kwargs)
     pl1 = Plot(stream, *args, ax=ax1, imshow=False, **kwargs)
-    for tl in ax2.yaxis.get_ticklabels(): #set_visible(False) #set_yticklabels([], axes=ax2) #visible(False)
+    for tl in ax2.yaxis.get_ticklabels():  #set_visible(False) #set_yticklabels([], axes=ax2) #visible(False)
         tl.set_visible(False)
     pl2.fig.colorbar(pl2.image, ax3)
     return pl1, pl2
@@ -1038,7 +1039,7 @@ def plotXcorrVsDist(stream, *args, **kwargs_in):
     kwargs = dict(relative='middle',
               yaxis='dist',
               figtitle='xcorr vs dist',
-              xlabel='lag time (s)', ylabel='dist (km)')
+              xlabel='lag time (s)', ylabel='interstation distance (km)')
     kwargs.update(kwargs_in)
     return Plot(stream, *args, **kwargs)
 
@@ -1220,7 +1221,7 @@ def compareRF(streamlist, start=None, end=None, relative='ponset', component='Q'
     return fig
 
 @deprecated
-def __plot3_old(stream, start=None, end=None, relative='ponset', scale0=1, absolutescale=None, plotphases=False, show=True, #delete=False,
+def __plot3_old(stream, start=None, end=None, relative='ponset', scale0=1, absolutescale=None, plotphases=False, show=True,  #delete=False,
           topcolor='gray', botcolor='white', publication=False, color='kk', zero='left', ax=None, plotdate=False):
     """
     Use Plot class instead
@@ -1260,7 +1261,7 @@ def __plot3_old(stream, start=None, end=None, relative='ponset', scale0=1, absol
         else:
             fig = getFigure()
         axis = ax = fig.axes[0]
-        fig.suptitle(scale)#'scale %5.2f' % scale)
+        fig.suptitle(scale)  #'scale %5.2f' % scale)
         #ax = fig.add_axes([0.05, 0.05, 0.9, 0.9])
     else:
         fig = None
@@ -1520,7 +1521,7 @@ class Farm(object):
         axsl2 = fig1.add_axes([0.75, 0.01, 0.15, 0.03])
         sl1 = Slider(axsl1, 'sec min(LP)', 0.1, 10.0, valinit=2.)
         sl2 = Slider(axsl2, 'max(HP)', 1., 20.0, valinit=3.)
-        def slUpdate(value): #@UnusedVariable
+        def slUpdate(value):  #@UnusedVariable
             self.smin = sl1.val
             self.smax = sl2.val
         sl1.on_changed(slUpdate)

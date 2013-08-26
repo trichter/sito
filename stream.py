@@ -95,7 +95,14 @@ def read(pathname_or_url, *args, ** kwargs):  # format=None, headonly=False,
                 content.extend(file_content.split('\n'))
     if len(content) > 0 and len(content) == len(ms):
         for i in range(len(ms)):
-            st = eval(content[i])  # quiet slow
+            try:
+                st = eval(content[i])  # quiet slow and of course very bad
+            except NameError as ex:
+                if 'masked' in content[i]:
+                    content[i] = content[i].replace('masked', '-1')
+                    st = eval(content[i])
+                else:
+                    raise ex
             if ms[i].stats.get('station') and ms[i].stats.station != st.station or \
                ms[i].stats.get('channel') and ms[i].stats.channel != st.channel or \
                not ignore_starttime and ms[i].stats.get('starttime') and abs(ms[i].stats.starttime - st.starttime) > 1:
