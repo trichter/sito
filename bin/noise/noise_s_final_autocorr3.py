@@ -33,8 +33,8 @@ def main():
     correlations = get_correlations(stations, components, stations2)
     print correlations
 
-    method = 'FINAL_filter4-6_1bit_auto'
-    #method = 'FINAL_filter4-6_1bit_auto_3C'
+    #method = 'FINAL_filter4-6_1bit_auto'
+    method = 'FINAL_filter4-6_1bit_auto_3C'
     #method = 'FINAL_filter3-5'
 
     data = IPOC(xcorr_append='/' + method, use_local_LVC=False)
@@ -56,9 +56,10 @@ def main():
 
 #    plotXcorrs(data, correlations, t1, t2, start=None, end=None, plot_overview=True, plot_years=False, use_dlognorm=False,
 #                      plot_stack=True, plot_psd=False, add_to_title='', downsample=None)
-
-    plotXcorrs(data, correlations, t1, t2, start= -20, end=20, plot_overview=True, plot_years=False, use_dlognorm=False,
-                      plot_stack=True, plot_psd=False, add_to_title='', downsample=None, ext='_hg.pdf', vmax=0.02)
+    #plt.rc('font', size=16)
+    plotXcorrs(data, correlations, t1, t2, start=-20, end=20, plot_overview=True, plot_years=False, use_dlognorm=False,
+                      plot_stack=True, plot_psd=False, downsample=None, ext='_hg0.02_dis.pdf', vmax=0.02,
+                      add_to_title='4-6Hz', ylabel=None)
 
 #    stack(data, correlations, dt= -1)
     #stack(data, correlations, dt=60 * 60, period=5 * 60)

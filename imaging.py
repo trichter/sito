@@ -180,7 +180,7 @@ def UTC2year(utc):
     year = utc.year
     return year + utc.julday / (365. + calendar.isleap(year))
 
-def plotRFmarks(stream, ax, t1= -20, t2= -10, options='r', lw=2):
+def plotRFmarks(stream, ax, t1=-20, t2=-10, options='r', lw=2):
     st = stream.select(component='Z')
     if len(st) == 0:
         st = stream.select(component='L')
@@ -245,7 +245,7 @@ class Plot(object):
                  ):
         """
         Plot stream...
-                
+
         @param stream: stream
         @param start: start time relative to param relative
         @param end: end time relative to param relative
@@ -267,7 +267,7 @@ class Plot(object):
         @param fast: if True sets params topcolor and botcolor to 'white'
         @param scale: relatvie scale
         @param absolutescale: if set use this absolute scale
-        @param sumscale: scale for summation trace relative to normal scale 
+        @param sumscale: scale for summation trace relative to normal scale
         @param imshow: dont plot lines but an image
         @param cmap: colormap for image
         @param colorbar: plot the colorbar for image?
@@ -337,7 +337,7 @@ class Plot(object):
         if self.plotinfowhere is None:
             self.plotinfowhere = ('right',) * lenplotinfo
         if plotinfodicts is None:
-            plotinfodicts = [dict(pad=0, size=0.8) for i in range(len(self.plotinfo))]  #@UnusedVariable
+            plotinfodicts = [dict(pad=0, size=0.2) for i in range(len(self.plotinfo))]  #@UnusedVariable
         if plot_stack:
             self.plotinfo += ('sum',)
             self.plotlabel += ('stack',)
@@ -345,7 +345,7 @@ class Plot(object):
                 self.plotinfowhere += ('top',)
             else:
                 self.plotinfowhere += ('right',)
-            plotinfodicts += (dict(pad=0, size=0.8),)
+            plotinfodicts += (dict(pad=0, size=0.6),)
         if plot_psd:
             self.plotinfo += ('psd',)
             self.plotlabel += ('PSD vs. ' + self.psd_scale,)
@@ -410,6 +410,8 @@ class Plot(object):
                 vmax1 = np.max(np.abs(data))
                 vmax2 = np.max(np.abs(np.mean(data, axis=0)))
                 self.vmax = min(vmax1, vmax2 * 1.5)
+                import math
+                self.vmax = round(self.vmax, int(math.ceil(-math.log10(self.vmax))))
             else:
                 self.vmax = vmax
             if vmin is None:
@@ -462,10 +464,11 @@ class Plot(object):
             self._imshow()
             ax.set_aspect('auto')
             if colorbar:
+                colorbar_kwargs = dict(fraction=0.03)  #FOR AUTO, extend='both')
                 if self.norm is None:
-                    fig.colorbar(self.image, ax=ax)
+                    fig.colorbar(self.image, ax=ax, **colorbar_kwargs)
                 else:
-                    fig.colorbar(self.image, ax=ax, ticks=self.norm.ticks(), format='%1.0e')
+                    fig.colorbar(self.image, ax=ax, ticks=self.norm.ticks(), format='%1.0e', **colorbar_kwargs)
         if plotphases:
             plotPhases(stream, ax, plotphases)
         ### print title
@@ -494,11 +497,11 @@ class Plot(object):
                 else:
                     trans = box_ax.transAxes
                 from matplotlib import transforms
-                offset = transforms.ScaledTranslation(-10. / 72, -10. / 72, fig.dpi_scale_trans)
+                offset = transforms.ScaledTranslation(-2. / 72, -2. / 72, fig.dpi_scale_trans)
                 trans = trans + offset
-                props = dict(boxstyle='round', facecolor='wheat', alpha=0.8)
+                props = dict(boxstyle='round', facecolor='wheat', alpha=0.8, lw=0.5)
                 # place a text box in upper left in axes coords
-                box_ax.text(1., 1., figtitle, transform=trans, fontsize=box_fs,
+                box_ax.text(1, 1, figtitle, transform=trans, fontsize=box_fs,
                         verticalalignment='top', ha='right', bbox=props)
 
             if not title_in_axis and not fancy_box:
@@ -742,7 +745,7 @@ class Plot(object):
                     ax2 = ax_info[i].twiny()
                     ax2.set_axes_locator(ax_info[i].get_axes_locator())
                     ax2.plot(stream.getHI(info2), offsets, '.r', mec='r', ms=2, alpha=alpha)
-                    ax2.xaxis.set_major_locator(MaxNLocator(3))
+                    ax2.xaxis.set_major_locator(MaxNLocator(5))  #FOR AUTO: 3
                     for tl in ax2.get_xticklabels():
 #                        from IPython import embed
 #                        embed()
@@ -846,7 +849,7 @@ class Plot(object):
                     ax_info[i].plot(offsets, [UTC2year(j) for j in stream.getHI(info)], '.', mec='b', ms=2)
                 elif 'sum' in info or 'mean' in info:
                     temp_mean = np.mean(self.data, axis=0)
-                    ax_info[i].plot(self.t, temp_mean, 'k', lw=1.5)
+                    ax_info[i].plot(self.t, temp_mean, 'k', lw=1.5, zorder=6)
                     # plot polys
                     if cc.to_rgb(topcolor) != (1, 1, 1):
                         polys.append(ax_info[i].fill_between(self.t, temp_mean, 0, linewidth=0, where=temp_mean >= 0, facecolor=topcolor))
@@ -862,7 +865,7 @@ class Plot(object):
                     ax_info[i].loglog(freqs, pxx)
                 elif not self.xaxis_data:
                     if 'count' in info:
-                        ax_info[i].bar(offsets, stream.getHI(info), width=np.min(np.abs(offsets - np.roll(offsets, 1))), align='center', color='b')
+                        ax_info[i].bar(offsets, stream.getHI(info), width=np.min(np.abs(offsets - np.roll(offsets, 1))), align='center', color='b', lw=0.5)
                     else:
                         ax_info[i].plot(offsets, stream.getHI(info), '.', mec='b', ms=2)
                 else:
@@ -893,9 +896,7 @@ class Plot(object):
                     for label in labels:
                         label.set_rotation(70)
                 elif not 'psd' in info:
-                #else:
-                    ax_info[i].yaxis.set_major_locator(MaxNLocator(5))
-
+                    ax_info[i].yaxis.set_major_locator(MaxNLocator(3))
                 #### end else
             if not 'psd' in info:
                 if self.minor_x:
@@ -981,7 +982,7 @@ def plotTrace(trace, *args, **kwargs_in):
 def plotTrace2(data, day, station, component='Z', raw=True, **kwargs):
     """
     Plot first trace of a day file.
-    
+
     @param data: data.Data object
     @param day: UTCDateTime object
     @param station: string
@@ -1131,7 +1132,7 @@ def plot2(stream, start=None, end=None, relative='ponset', scale0=1, plotphases=
 def compareRF(streamlist, start=None, end=None, relative='ponset', component='Q', scale0=1, show=True, topcolor='black', botcolor='gray', sumtrcs=True):
     """
     Use Plot class instead
-    
+
     Plot RFs in one axis in time window with filling.
     """
 
@@ -1422,7 +1423,7 @@ def __plotProfile_old(stream, start=None, end=None, relative='ponset', scale0=2,
 class Farm(object):
     """
     Use RFTool instead.
-    
+
     Class for selecting events
 
     Key:

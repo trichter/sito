@@ -44,7 +44,9 @@ def plot_pspier():
         coords = np.array([lat, lon])
         np.save(coordfile, coords)
     from sito import map
-    m = map.createIPOCMap(show=False, trench=None, earthquake='Tocopilla_position')
+    map_dic = dict(figsize=(0.95 * fw, 1.61 * fw * 1.1), margin=(0.1, 0.04, 0.8, 0.92),
+               lw=0.5, station_markersize=3, spines_lw=1, loffset=10000)
+    m = map.createIPOCMap(ll=(-25, -71.5), show=False, trench=None, **map_dic)
     x, y = m(coords[1, :], coords[0, :])
     m.plot(x, y, 'xr', ms=3)
     print(pp_path + 'map_pp%d.pdf' % pspier_depth)
@@ -63,7 +65,6 @@ def calculate_profile():
 
 def plot_depth(ax):
     ax2 = ax.twinx()
-    ax2.set_position(ax.get_position(False))
     h = np.array((0, 50, 100, 150, 200))
     h2 = np.arange(20) * 10
     t = util.depth2time(h)
@@ -73,8 +74,12 @@ def plot_depth(ax):
     ax2.yaxis.set_major_locator(myLocator)
     ax2.yaxis.set_minor_locator(myMinorLocator)
     ax2.yaxis.set_major_formatter(myFormatter)
-    ax2.set_ylim(ax.get_ylim())
     ax2.set_ylabel('depth (km)')
+    ax2.set_ylim(ax.get_ylim())
+    if len(plt.gcf().axes) == 3:  # dirty hack
+        from mpl_toolkits.axes_grid1 import make_axes_locatable
+        divider = make_axes_locatable(ax2)
+        ax3 = divider.append_axes('top', pad=0, size=0.2)
 
 
 def plot(title=''):
@@ -83,12 +88,23 @@ def plot(title=''):
         xlabel = u'longitude of piercing points (°)'
     else:
         xlabel = u'latitude of piercing points (°)'
+
     plot = ms.plotProfile(start, end, scale=scale, xaxis=header,
-                              xlabel=xlabel,
-                              figtitle=title, fancy_box=True, box_ax=1)
+                          xlabel=xlabel,
+                          figtitle=title, fancy_box=True, box_ax=1, box_fs=5)
     ax = plot.fig.axes[0]
     ax.set_xlim(xlim)
     plot_depth(ax)
+    for ax2 in plt.gcf().axes:
+        ax2.xaxis.labelpad = 1
+        ax2.yaxis.labelpad = 1
+    plt.gcf().set_size_inches(fw, fw / 1.61)
+    plt.tight_layout(pad=0.2, h_pad=0.)
+    if len(plt.gcf().axes) == 4:  # dirty hack
+        plt.gcf().axes[3].set_visible(False)
+
+    #from IPython import embed
+    #embed()
 
 def plot2():
     global pp_file
@@ -99,7 +115,15 @@ def plot2():
             title = None
 
         plot(title=title)
-        plt.savefig(pp_file + '.pdf')
+        if annotate:
+            aprops = dict(arrowstyle='->', lw=0.6)
+            bbprops = dict(boxstyle='round', facecolor='white', alpha=0.9, lw=0.0)
+            plt.gcf().axes[2].annotate('subducting slab', (-69.8, 7),  #(0.5, 0.5),
+                                       xytext=(10, -30),  #xycoords='axes fraction',
+                                       textcoords='offset points',
+                                       arrowprops=aprops, bbox=bbprops,
+                                       fontsize=4, ha='center')
+        plt.savefig(pp_file + '.png', dpi=600)
     else:
         pp_file_old = pp_file
         for i in range(len(bins2) - 1):
@@ -110,7 +134,7 @@ def plot2():
             elif header2 and 'plon' in header2:
                 title = u'longitude %.1f° to %.1f°' % (bins2[i], bins2[i + 1])
             plot(title=title)
-            plt.savefig(pp_file + '.pdf')
+            plt.savefig(pp_file + '.png')
             plt.close()
         pp_file = pp_file_old
 
@@ -130,6 +154,7 @@ def plot3():
         else:
             ms.plotProfile(start, end, xaxis=header,
                            scale=scale,
+                           xlabel=u'longitude of piercing points (°)',
                            plotinfo=(),
                            figtitle=None, show=False, topcolor='green', botcolor='w',
                            ax=plot.ax, ax_info=plot.ax_info, alpha=0.3)
@@ -149,7 +174,12 @@ def plot3():
     # matplotlib.text.Text instances
     for t in leg.get_texts():
         t.set_fontsize('small')
-    plot.fig.savefig(pp_file % ('comparison_' + str(bins2[0]), bins2[-1]) + '.pdf')
+    for ax2 in plt.gcf().axes:
+        ax2.xaxis.labelpad = 1
+        ax2.yaxis.labelpad = 1
+    plt.gcf().set_size_inches(fw, fw / 1.61)
+    plt.tight_layout(pad=0.2, h_pad=0.)
+    plot.fig.savefig(pp_file % ('comparison_' + str(bins2[0]), bins2[-1]) + '.png', dpi=600)
 
 
 
@@ -170,6 +200,7 @@ if stack_lon:
     header = 'plon%d' % pspier_depth
     header2 = None
     #header2 = 'plat%d' % pspier_depth
+    annotate = True
     bins1 = np.linspace(lon1, lon2, int((lon2 - lon1) / dif) + 1)
     bins2 = (-18, -21, -24)
     #bins = np.linspace(lon1, lona, int((lona - lon1) / dif) + 1)
@@ -182,14 +213,14 @@ else:
 ### for latitudional stack
     dif = 0.5
     scale = 1 * dif
-    lat1 = -23. # -25
+    lat1 = -23.  # -25
     lat2 = -18.
     xlim = (-23, -18)
     header = 'plat%d' % pspier_depth
     header2 = 'plon%d' % pspier_depth
     bins1 = np.linspace(lat1, lat2, int((lat2 - lat1) / dif) + 1)
     bins2 = (-69, -69.5, -70, -70.5)
-    #pp_path = path + 'pspier/    
+    #pp_path = path + 'pspier/
     pp_path = path + 'pspier/stack_lat/'
 pp_file = pp_path + 'profile_pp_Q_%s' % str(dif)
 pp_file = pp_path + '%s_profile_%s%s' % (header, str(dif), '%s')
@@ -199,12 +230,12 @@ else:
     pp_file = pp_file % ('_' + header2 + '_%s_%s')
 
 
-
-
+fw = 70 / 25.4
+mpl.rcParams.update({'font.size': 6, 'lines.linewidth':0.5})
 #calculate_pspier(True)
-plot_pspier()
+#plot_pspier()
 #calculate_profile()
-#plot2()
+plot2()
 #plot3()
 
 #plt.show()

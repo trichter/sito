@@ -5,8 +5,12 @@ copyright:
 license:
     MIT license
 
-These scripts were written for my work at GFZ Potsdam. They are tested and work
-well with data from the IPOC project I am working on.
+These scripts were written for my work at GFZ Potsdam. I do not recommend to
+use or install them. Feel free to copy&paste some lines.
+
+I refactored the rf functionality in a separate repository.
+There are a lot of alternatives for Python packages supporting
+ambient noise cross-correlation.
 
 Required:
 - python 2.7
@@ -15,7 +19,7 @@ Required:
 - matplotlib
 - basemap
 - ipython
-- obspy - developer version
+- obspy
 - seispy
 - progressbar
 

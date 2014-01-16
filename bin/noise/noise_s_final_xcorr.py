@@ -40,15 +40,15 @@ def main():
 #    noisexcorrf(data, correlations, t1, t2, shift, pool=pool)
 #    pool.close()
 #    pool.join()
-
-#    plotXcorrs(data, correlations, t1, t2, start=None, end=None, plot_overview=True, plot_years=False, use_dlognorm=False,
-#               plot_stack=True, plot_psd=False, add_to_title='', downsample=None)
+    plt.rc('font', size=16)
+    plotXcorrs(data, correlations, t1, t2, start=None, end=None, plot_overview=True, plot_years=False, use_dlognorm=False,
+               plot_stack=True, plot_psd=False, add_to_title='', downsample=None, ylabel=None, ext='.pdf')
 #    stack(data, correlations, dt= -1)
 
-    stack(data, correlations, dt=10 * 24 * 3600, shift=2 * 24 * 3600)
+    #stack(data, correlations, dt=10 * 24 * 3600, shift=2 * 24 * 3600)
     plotXcorrs(data, correlations, t1=None, t2=None, start=None, end=None, plot_overview=True, plot_years=False, use_dlognorm=False,
-               plot_stack=True, plot_psd=False, add_to_title='', downsample=None,
-               stack=('10days', '2days'))
+               plot_stack=True, plot_psd=False, add_to_title='  stack over 10 days', downsample=None, ylabel=None,
+               stack=('10days', '2days'), ext='.pdf')
 
 
 

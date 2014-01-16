@@ -708,6 +708,12 @@ class IPOC(Data):
             if merge_later:
                 ms.merge()
         return ms
+    def get_paz(self):
+        import yaml  #@UnresolvedImport
+        with open('/home/richter/Data/paz/resp_IPOC.yaml') as f:
+            paz = yaml.load(f)
+        return paz
+
 
 class ParkfieldTest(Parkfield):
     def __init__(self, data_path, temp_path=tempfile.gettempdir(),

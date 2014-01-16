@@ -396,7 +396,8 @@ class Events(list):
         else:
             if radius == 'magnitude':
                 radius_val *= 10  # we will scale the dots by 10 time the magnitude
-        m.scatter(x, y, s=radius_val, c=color_val, marker='o', lw=0, alpha=alpha)
+        m.plot(x, y, ls='', ms=radius_val**0.5, mfc=color_val, marker='o',
+               mew=0, alpha=alpha)
         if show_colorbar:
             c = plt.colorbar(orientation='horizontal', shrink=0.4)
             c.set_label(color)
@@ -458,7 +459,7 @@ ev_para_expr = re.compile(r'<[eE]ventParameters>')
 def readSeisComPEventXML0_6(filename):
     """
     Reads a single SeisComP event XML V0.6 file and returns a ObsPy Catalog object.
-    
+
     This fixes the following differences to QUAKEML1.1:
     - EventProperties is replaced by eventProperties
     - event start tag is moved behind eventProperties start tag
@@ -483,7 +484,7 @@ def readSeisComPEventXML0_6(filename):
     return readQuakeML(temp)
 
 regex_GEOFON = r"""
-    # regex for text pasted from geofon eartquake bulletin 
+    # regex for text pasted from geofon eartquake bulletin
     ^(?P<time>[\d\s:-]{19,20})\s+
     (?P<magnitude>\d.\d)\s+
     (?P<latitude>\d+.\d+)°(?P<latitude_sign>[NS])\s+

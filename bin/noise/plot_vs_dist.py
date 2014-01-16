@@ -46,21 +46,21 @@ print 'no correlation for pairs:', no_corr_pairs(ms, ipoc)
 v = get_vel(ms)
 #v = 3.03093386
 print 'velocity:', v
-fig = plt.figure(figsize=(10, 6))
+fig = plt.figure(figsize=(10, 12))
 plot = ms.plotXcorrVsDist(-300, 300, scale=10, fig=fig,
                           figtitle='%d cross-correlations' % len(ms))
 plot.ax.plot((-300, 0, 300), (300 * v, 0, 300 * v), 'r')
 
 d = 30
-w = 50
+w = 80
 xy = np.array([(d, 0), (300 + d, v * 300), (300 + d + w, v * 300), (d + w, 0)])
-polygon1 = Polygon(xy, True, alpha=0.4, color='b')
+polygon1 = Polygon(xy, True, alpha=0.4, color='b', zorder=50)
 plot.ax.add_patch(polygon1)
 xy[:, 0] *= -1
-polygon2 = Polygon(xy, True, alpha=0.4, color='b')
+polygon2 = Polygon(xy, True, alpha=0.4, color='b', zorder=50)
 plot.ax.add_patch(polygon2)
 
 plot.ax.set_ylim(0, 720)
 
-plt.savefig(output)
+plt.savefig(output, bbox_inches='tight')
 plt.show()

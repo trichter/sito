@@ -162,17 +162,21 @@ def plot_salar_map():
                    colormap=cm.binary,
                    elevation='/home/richter/Data/map/salar_90m.tif',
                    elev_oceans=False,
-                   stations='ipoc', spines_lw=2,
+                   stations=None,
+                   spines_lw=2,
                    loffset=1000)
+    from sito.data import IPOC
     m = map.createIPOCMap(**map_dic)
     chos = [('CHO1', -21.094050, -70.102000, 653),
             ('CHO2', -21.105933, -70.096900, 620),
             ('CHO3', -21.106233, -70.097517, 625)]
+    kw = dict(bbox=dict(boxstyle="round", fc="w", alpha=0.5, ec='none'))
+    IPOC().stations.plot(m, mfc='w', ms=4, zorder=10, lsize='small', kwargs_an=kw)
     #ASTER GDEM is a product of METI and NASA.
     for station, lat, lon, height in chos[1:2]:
         x, y = m(lon, lat)
-        m.plot((x,), (y,), marker='o', mfc='r', ms=4, zorder=10)
-        plt.annotate(station, (x, y), xytext=(3, 3), textcoords='offset points', size='small')
+        m.plot((x,), (y,), marker='o', mfc='w', ms=4, zorder=10)
+        plt.annotate(station, (x, y), xytext=(3, 3), textcoords='offset points', size='small', **kw)
     #plt.annotate('ASTER GDEM is a product of METI and NASA.', (1, 0), xycoords='axes fraction', ha='right', va='bottom', size='xx-small')
     plt.annotate('Salar Grande', (0.62, 0.56), rotation=-80, xycoords='axes fraction',
                  ha='center', va='center', size='small', color='k')
@@ -215,7 +219,7 @@ fw = 85 / 25.4
 # dis
 fwd = 140 / 25.4
 #font.size : 8.0
-mpl.rcParams.update({'font.size': 7, 'lines.linewidth':0.5})
+mpl.rcParams.update({'font.size': 6, 'lines.linewidth':0.5})
 #mpl.rcParams.update({'font.size': 9, 'lines.linewidth':1})
 margin = (0.1, 0.075, 0.65, 0.85)
 #map.createFancyIPOCMap(show=False, elevation='/home/richter/Data/map/nchile_228m.grd',
@@ -226,14 +230,19 @@ margin = (0.1, 0.075, 0.65, 0.85)
 #                       lw=1, spines_lw=2, dpi=200, station_markersize=6,
 #                       station_labelsize=9, loffset=10000)
 
+# for JGR
 map_dic = dict(figsize=(fw, 1.61 * fw * 0.8), margin=(0.05, 0.05, 0.6, 0.9),
                lw=0.5, station_markersize=3, spines_lw=2, loffset=10000)
+# for dis
+map_dic = dict(figsize=(fw, 1.61 * fw * 0.8), margin=(0.05, 0.05, 0.6, 0.9),
+               lw=0.5, station_markersize=3, spines_lw=1, loffset=10000)
+
 
 #map.createFancyIPOCMap(show=False, save=None)
 
 #plot_results1()
-#plot_results1(map_dic, scale=0.5)
-plot_salar_map()
+plot_results1(map_dic, scale=0.5)
+#plot_salar_map()
 #plot_PATCX_map()
 
 

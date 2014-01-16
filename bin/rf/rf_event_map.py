@@ -21,20 +21,31 @@ def create_event_maps(station='*'):
     for file_ in glob(em_path + 'events_%s.txt' % station):
         st_events = events.Events.read(file_)
         station = (os.path.splitext(os.path.basename(file_))[0]).split('_')[1]
+        if annotate=='PB01_special' and station != 'PB01':
+            continue
         m = map.createRFEventMap(show=False, trench=None)
         all_events.plot_(m, color='b', radius=5, alpha=0.5)
         st_events.plot_(m, color='r', radius=8, alpha=0.5)
         if annotate:
-            # fancy box
-            from matplotlib import transforms
             ax = m._check_ax()
-            offset = transforms.ScaledTranslation(-20. / 72, 20. / 72,
-                                                  plt.gcf().dpi_scale_trans)
-            trans = ax.transAxes + offset
-            props = dict(boxstyle='round', facecolor='wheat', alpha=0.8)
-            ax.text(1., 0., station, transform=trans, fontsize=14,
-                    verticalalignment='bottom', ha='right', bbox=props)
-            plt.gcf().savefig(em_path + 'map_events_%s_anno.pdf' % station)
+            if annotate != 'PB01_special':
+                # fancy box
+                from matplotlib import transforms
+                offset = transforms.ScaledTranslation(-20. / 72, 20. / 72,
+                                                      plt.gcf().dpi_scale_trans)
+                trans = ax.transAxes + offset
+                props = dict(boxstyle='round', facecolor='wheat', alpha=0.8)
+                ax.text(1., 0., station, transform=trans, fontsize=14,
+                        verticalalignment='bottom', ha='right', bbox=props)
+                plt.gcf().savefig(em_path + 'map_events_%s_anno.pdf' % station)
+            else:
+                y0, x0 = m(-69.5, -21)
+                dx = 0.2e6
+                dy = 0.5*dx*3**0.5
+                ax.plot((x0, x0-dx, x0+dx, x0),
+                        (y0-dy, y0+dy, y0+dy, y0-dy), 'k')
+                ax.annotate(station, (x0+1.5*dx, y0))
+                plt.gcf().savefig(em_path + 'map_events_%s_special.pdf' % station)
         else:
             plt.gcf().savefig(em_path + 'map_events_%s.pdf' % station)
 
@@ -49,22 +60,29 @@ def create_region_map():
     m = map.createRFEventMap(show=False, trench=None, circles=(), circles_around=regions, dict_basemap=dict_basemap_ipoc)
     all_events.plot_(m, color='b', radius=5, alpha=0.5)
     ax = m._check_ax()
+    y0, x0 = m(-69.5, -21)
+    dx = 0.2e6
+    dy = 0.4e6
+    ax.plot((x0-dx, x0-dx, x0+dx, x0+dx, x0-dx),
+            (y0-dy, y0+dy, y0+dy, y0-dy, y0-dy), 'k')
+    ax.annotate('IPOC', (x0+1.5*dx, y0))
     ax.text(9.6e6, 1.8e6, 'R1')
     ax.text(4.0e6, 10.5e6, 'R2')
     ax.text(3.2e6, 11.1e6, 'R3')
     plt.gcf().savefig(em_path + 'map_regions.pdf')
 
 regions = ((-58.3, -22.0, 800, False, 'r'), #1 South Sandwich
-            (14.1, -91.2, 600, False, 'r'), #2 Guatemala           
+            (14.1, -91.2, 600, False, 'r'), #2 Guatemala
            (13.5, -92.1, 1400, False, 'r')) #3 Mexico
+annotate = 'PB01_special'
 annotate = True
 eventfile = '/home/richter/Data/events/2012_03_events_27-93_mag5.5_IPOC.txt'
 path = '/home/richter/Results/IPOC/receiver/2012_mag5.5/'
 em_path = path + 'event_maps/'
 
 #create_event_files()
-#create_event_maps()
+create_event_maps()
 #annotate = False
 #create_event_maps()
 
-create_region_map()
+#create_region_map()

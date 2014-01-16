@@ -270,7 +270,7 @@ def prepare(data, stations, t1, t2, component='all', use_floating_stream=True,
             pool=None, max_preload=5, **kwargs):
     """
     Prepare data for cross correlation.
-    
+
     Day files of raw data are loaded (from files data.raw), and the prepared
     data is again written to day files (to files data.raw).
 
@@ -292,7 +292,7 @@ def prepare(data, stations, t1, t2, component='all', use_floating_stream=True,
     @param reserve: parameter passed to FloatingStream()
            should be the time between the end/beginning of your data and
            midnight
-           
+
     Her is the documentation string of xcorr.timeNorm
     """
 #            filter=(None, None), downsample=None, #@ReservedAssignment
@@ -493,7 +493,7 @@ def noisexcorrf(data, correlations, t1, t2, shift_sec, period=24 * 3600,
                  pool=None, max_preload=5, overlap=0):
     """
     Freqeuency domain noise cross correlation
-    
+
     Expects day files prepared with prepare()
     """
     if period == 'day':
@@ -885,10 +885,19 @@ def plotXcorrs(data, correlations, t1, t2, filters=None, filter_now=True, start=
                         figtitle = savebase + ' ' + add_to_title
                     stream.plotXcorr(startt, endt, imshow=True, use_dlognorm=use_dlognorm,
                                      fig=plt.figure(figsize=figsize),
-                                     figtitle=figtitle, save=save, show=show,
+                                     figtitle=figtitle, save=None, show=show,
                                      dateformatter='%Y-%m-%d',  #dateformatter='%y %b'
                                      ** kwargs)
-                    plt.show()
+                    tit = stream[0].stats.station
+                    tits = stream[0].stats.station.split('-')
+                    if tits[0] == tits[1]:
+                        tit = tits[0]
+                    tit = tit + '  ' + add_to_title
+                    plt.gcf().axes[1].annotate(tit, (0.5, 1.), (0, 5), 'axes fraction', 'offset points', clip_on=False, ha='center', va='bottom')
+                    plt.gcf().savefig(save, bbox_inches='tight')
+                    if show:
+                        plt.show()
+                    plt.close()
                 if plot_years:
                     for ys in streamyeargen2(stream):
                         t_year, s_year = ys
