@@ -318,7 +318,7 @@ def prepare(data, stations, t1, t2, component='all', use_floating_stream=True,
         #for (station, t_day) in ProgressBar()(itertools.product(stations, daygen(t1, t2))):
                 try:
                     stream = data.getRawStreamFromClient(t_day - 60, t_day + 24 * 3600 + 60, station, component=component)
-                except ValueError as ex:
+                except Exception as ex:
                     log.info('Error loading station %s day %s: %s' % (str(station), t_day.date, ex))
                     continue
 #                    if station != 'LVC' or not arclink_client_for_LVC:

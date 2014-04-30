@@ -36,6 +36,7 @@ method = 'FINAL_filter4-6_1bit_auto'
 method = 'FINAL_filter4-6_1bit_auto_3C'
 method = 'FINAL_filter3-5'
 method = 'PAT_filter9-11'
+method = 'zerotest_nozero'
 
 data = IPOC(xcorr_append='/' + method, use_local_LVC=False)
 #path = '/home/richter/Results/IPOC/xcorr/Tocopilla/filter4-6_water_env2_1bit/stretch_t/'
@@ -49,6 +50,7 @@ path = '/home/richter/Results/IPOC/xcorr/FINAL_filter4-6_1bit_auto/stretch/'
 path = '/home/richter/Results/IPOC/xcorr/FINAL_filter4-6_1bit_auto_3C/stretch3_10s/'
 path = '/home/richter/Results/IPOC/xcorr/FINAL_filter3-5/stretch/'
 path = '/home/richter/Results/IPOC/xcorr/PAT_filter9-11/stretch3/'
+path = '/home/richter/Results/IPOC/xcorr/zerotest_nozero/stretch/'
 #path = '/home/richter/Results/IPOC/xcorr/FINAL_filter4-6_1bit_auto/stretch2/'
 #path = '/home/richter/Results/IPOC/xcorr/FINAL_filter4-6_1bit_auto/stretch_Toco_PATCX/'
 #path = '/home/richter/Results/IPOC/xcorr/Tocopilla/filter4-6_water_env2_1bit_fft/stretch/'
@@ -147,6 +149,8 @@ USE_TWS_AFTER_SW = False
 #t2 = UTC('2008-02-01')
 t1 = UTC('2007-01-01')
 t2 = UTC('2012-10-01')
+t1 = UTC('2007-10-01')
+t2 = UTC('2007-11-30')
 #t1 = UTC('2009-05-01')
 #t2 = UTC('2009-10-01')
 #t2 = UTC('2007-09-05')

@@ -20,10 +20,10 @@ def main():
 
     components = 'Z'
     # TOcopilla earthquake: 2007-11-14 15:14
-    t1 = UTC('2006-02-01')
-    #t2 = UTC('2008-12-31')
+    t1 = UTC('2007-10-01')
+    t2 = UTC('2007-11-30')
     #t2 = UTC('2012-10-01')
-    t2 = UTC('2011-12-31')
+    #t2 = UTC('2011-12-31')
 #    t1 = UTC('2009-05-01')
 #    t2 = UTC('2009-05-03')
 
@@ -33,21 +33,22 @@ def main():
     correlations = get_correlations(stations, components, stations2)
     print correlations
 
-    #method = 'FINAL_filter4-6_1bit_auto'
-    method = 'FINAL_filter4-6_1bit_auto_3C'
+    method = 'zerotest_nozero'
+    #method = 'FINAL_filter4-6_1bit_auto_3C'
     #method = 'FINAL_filter3-5'
 
     data = IPOC(xcorr_append='/' + method, use_local_LVC=False)
     data.setXLogger('_' + method)
 
     pool = Pool()
-#    prepare(data, stations.split(), t1, t2, component=components,
-#            filter=(2, 4, 2, True), downsample=50,
-#            eventremoval='waterlevel_env2', param_removal=(10, 0),
-#            whitening=False,
-#            normalize='1bit', param_norm=None,
-#            pool=pool)
-#    noisexcorrf(data, correlations, t1, t2, shift, period=24 * 3600, pool=pool)
+    prepare(data, stations.split(), t1, t2, component=components,
+            filter=(4, 6, 2, True), downsample=50,
+            #eventremoval='waterlevel_env2', param_removal=(10, 0),
+            eventremoval=None, param_removal=None,
+            whitening=False,
+            normalize='1bit', param_norm=None,
+            pool=pool)
+    noisexcorrf(data, correlations, t1, t2, shift, period=24 * 3600, pool=pool)
 
 #    noisexcorrf(data, correlations, t1, t2, shift, period=5 * 60, pool=pool,
 #                max_preload=1000)

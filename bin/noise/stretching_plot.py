@@ -62,6 +62,7 @@ path = '/home/richter/Results/IPOC/xcorr/FINAL_filter0.01-0.5_1bit_whitening/str
 #path = '/home/richter/Results/IPOC/xcorr/FINAL_filter0.01-0.5_1bit_auto/stretch_Toco/'
 #path = '/home/richter/Results/IPOC/xcorr/FINAL_filter1-3_1bit_auto/stretch/'
 path = '/home/richter/Results/IPOC/xcorr/FINAL_filter4-6_1bit_auto/stretch/'
+path = '/home/richter/Results/IPOC/xcorr/zerotest_zero/stretch/'
 #path = '/home/richter/Results/IPOC/xcorr/FINAL_filter4-6_1bit_auto_hour/stretch/'
 #path = '/home/richter/Results/IPOC/xcorr/FINAL_filter4-6_1bit_auto_3C/stretch3_10s/'
 
@@ -97,13 +98,13 @@ filters = (None,)
 period = 24 * 3600
 
 METHOD = 'simple'
-METHOD = 'events'
-ALL = False  # all windows for different times in one figure
+#METHOD = 'events'
+ALL = True  # all windows for different times in one figure
 SIZE = 'A4'  # A4, A3, A41, A42
 show = False
-alt_ref = True
+alt_ref = False
 assert METHOD in 'simple correct woline sinus exp sinus_exp sinus_exp_alt events temp press humi'.split()
-for_ = 'JGRlegend'  #'DIS'  #F, C, JGR1, JGR2, JGR3, JGRlegend, False, DIS
+for_ = 'DIS'  #'DIS'  #F, C, JGR1, JGR2, JGR3, JGRlegend, False, DIS
 
 # simple
 # correct: correct line of highest correlation to be in a specific window
@@ -148,7 +149,7 @@ rotate_event_labels = 0
 plot_simple = METHOD == 'simple'
 
 ############# parameters#####
-str_range = 0.02  ###########
+str_range = 0.012  ###########
 thres_corr = 0.35  ##########
 thres_cor2 = 0.4  ###########
 thres_cor2 = 0.  ############
@@ -156,7 +157,7 @@ thres_dt = (-0.02, 0.02)  ###
 thres_dt = (-0.006, 0.006)  #
 
 add_to_file = ''
-add_to_file = '_2007_2008'  # for xcorr
+#add_to_file = '_2007_2008'  # for xcorr
 MAX_CORR_LINE = METHOD not in ('woline') and for_ not in ('JGR3',)
 temp_color = 'blue'
 max_xcorr_color = 'cyan' #'blue'

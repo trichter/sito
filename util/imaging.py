@@ -1,7 +1,10 @@
 # by TR
 
 from obspy.core import UTCDateTime
-from sito.util.seispy import dist2gps
+try:
+    from sito.util import dist2gps
+except:
+    pass
 import logging
 import numpy as np
 import matplotlib
@@ -81,7 +84,7 @@ def getTimeIntervall(stream, start=None, end=None, relative='starttime', ret_rel
         -time object
     :param ret_rel: - 'utc'  output in absolute UTCDateTime
         - 'relative': output in seconds relative to param relative
-        - time object: output in seconds relative to time 
+        - time object: output in seconds relative to time
     :return: start and end list of UTCDateTime or None if stream has length 0
     """
     N = len(stream)
@@ -172,10 +175,10 @@ xcorr_cmap = matplotlib.colors.LinearSegmentedColormap('xcorr_cmap', cdict, 256)
 class DLogNorm(Normalize):
     """
     Normalize a given positive or negative value to the 0-1 range on a log scale
-    
+
     negative values are mapped to 0-0.5
     positive values are mapped to 0.5-1
-    
+
     Derived from:
     matplotlib.colors.LogNorm
     """
@@ -194,7 +197,7 @@ class DLogNorm(Normalize):
         the over, under, and masked colors in the colormap, so it is
         likely to lead to surprises; therefore the default is
         *clip* = *False*.
-        
+
         cmin, cmax gives the range of logarithmic plot for positive (cmax)
         and negative (cmin) values. All values  with smaller absolute value
         are mapped to 0.5.

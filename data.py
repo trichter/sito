@@ -626,11 +626,12 @@ class IPOC(Data):
             ms = self.client.getWaveform(network, station, location, channel,
                                      starttime, endtime)
         except:
+            raise
             ms = []
         else:
             ms = Stream(ms)
         if len(ms) == 0:
-            raise ValueError('No traces in stream returned by seishub.')
+            raise ValueError('No traces in stream returned by client.')
         if station == 'LVC':
             for tr in ms:
                 ch = tr.stats.channel
