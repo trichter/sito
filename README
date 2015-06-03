@@ -1,16 +1,15 @@
 sito - Scripts for receiver function analysis and
-       ambient noise cross-correlation - based on ObsPy (http://obspy.org/)
+       ambient noise cross-correlation - based on ObsPy
 copyright:
-    2010-2013 Tom Richter (richter@gfz-potsdam.de)
+    2010-2015 Tom Eulenfeld (tom.eulenfeld@gmail.com)
 license:
     MIT license
 
-These scripts were written for my work at GFZ Potsdam. I do not recommend to
-use or install them. Feel free to copy&paste some lines.
+These scripts were written in the scope of my PhD at GFZ Postdam/FU Berlin.
+I do not maintain them any longer, but of course you are free to copy&paste code of interest.
 
-I refactored the rf functionality in a separate repository.
-There are a lot of alternatives for Python packages supporting
-ambient noise cross-correlation.
+A lot of alternative Python packages for ambient noise cross-correlation exist.
+I refactored the rf functionality in a separate repository (github.com/trichter/rf).
 
 Required:
 - python 2.7
