@@ -2,6 +2,7 @@
 
 | **copyright**: 2010-2015 Tom Eulenfeld (tom.eulenfeld@gmail.com)
 | **license**: MIT license
+|
 
 These scripts were written in the scope of my PhD at GFZ Postdam/FU Berlin.
 I do not maintain them any longer, but of course you are free to copy&paste code of interest.
@@ -12,6 +13,7 @@ Richter, T., C. Sens-Schönfelder, R. Kind, and G. Asch (2014), Comprehensive ob
 
 Richter, T. (2014), Temporal Variations of Crustal Properties in Northern Chile Analyzed with Receiver Functions and Passive Image Interferometry,
 dissertation, FU Berlin. `pdf2 <http://www.diss.fu-berlin.de/diss/servlets/MCRFileNodeServlet/FUDISS_derivate_000000014929/dissertation_richter.pdf>`_
+
 
 A lot of alternative Python packages for ambient noise cross-correlation exist.
 I refactored the receiver function functionality in a separate repository, see `rf <https://github.com/trichter/rf>`_.
