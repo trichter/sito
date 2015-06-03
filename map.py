@@ -199,10 +199,10 @@ def createMap(ll=None, ur=None, figsize=None, margin=None,
         if grid and grid_labels:
             m.drawparallels(np.arange(-90., 90., grid),
                             labels=[True, True, False, False], linewidth=grid_lw,
-                            xoffset=loffset, yoffset=loffset)
+                            xoffset=loffset, yoffset=loffset, size='small')
             m.drawmeridians(np.arange(0., 390., grid),
                             labels=[False, False, True, True], linewidth=grid_lw,
-                            xoffset=loffset, yoffset=loffset)
+                            xoffset=loffset, yoffset=loffset, size='small')
         elif grid:
             m.drawparallels(np.arange(-90., 90., grid),
                             labels=[False, False, False, False], linewidth=grid_lw)
@@ -387,7 +387,7 @@ def createMap(ll=None, ur=None, figsize=None, margin=None,
 def plotEvents(catalog, client=None, **kwargs):
     """
     Plot events on map.
-    
+
     When client is given it shows the waveform when the event is clicked.
     IPython may not be started in pylab mode for this feature working.
     """

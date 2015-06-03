@@ -179,16 +179,15 @@ def plot_veldrop_vs_sm(combine=False):
     twin = False
     dtypes = (UTC,) + 4 * (float,) + (basestring,)
     data = np.genfromtxt(VELDROP_VS_SM % 'events', dtype=dtypes, names=True)
-    print 2, data
     date, mag, veldrop, gm, vel, comment = zip(*data)
-    gm = np.array(gm)
+    gm = 2 * np.array(gm) # correct for wrong sensitivity used when calculating gm
     vel = np.array(vel)
     veldrop = np.array(veldrop)
 
     dtypes = (basestring,) + 3 * (float,) + (basestring,)
     data = np.genfromtxt(VELDROP_VS_SM % 'stations', dtype=dtypes, names=True)
     st, veldrop2, gm2, vel2, comment = zip(*data)
-    gm2 = np.array(gm2)
+    gm2 = np.array(gm2)  # here data was corrected in the data file
     vel2 = np.array(vel2)
     veldrop2 = np.array(veldrop2)
 
@@ -205,6 +204,8 @@ def plot_veldrop_vs_sm(combine=False):
     fig1 = plt.figure()
     ax1 = fig1.add_axes(axes1)
     ax2 = fig1.add_axes(axes2, sharey=ax1)
+    print gm, veldrop
+    print(len(gm), len(veldrop))
     ax1.scatter(gm, veldrop, s=30, marker='x', color='k')
     ax2.scatter(gm2, veldrop2, s=30, marker='x', color='k')  #facecolor='none')
 
@@ -234,16 +235,16 @@ def plot_veldrop_vs_sm(combine=False):
     print
     print
     ax1.annotate(r'$r^2\!=%0.2f$' % r_value ** 2, (0.63, 0.55), None, 'axes fraction')
-    x = np.array([0, 0.25])
+    x = np.array([0, 0.5])
     ax1.plot(x, slope * x + intercept, 'r-', zorder=-1)
     #ax1.plot(x, slope2 * x, 'b-')
-    ax1.set_xlim((0, 0.23))
+    ax1.set_xlim((0, 0.46))
     ax1.set_ylim((0, 1.2))
     ax2.set_xlim((0, 3))
     if not combine:
         ax1.set_ylabel('velocity drop (%)')
     ax1.set_xlabel(r'peak ground acceleration ($\rm m/\rm s^2\!$)', ha='left')
-    ax1.set_xticklabels(['0.0', '0.05', '0.1', '0.15', '0.2'])
+    #ax1.set_xticklabels(['0.0', '0.1', '0.1', '0.15', '0.2'])
     ax1.annotate('station PATCX\ndifferent events', (0, 1), (5, -5), 'axes fraction', 'offset points', va='top')
     ax2.annotate('Tocopilla event\ndifferent stations', (1, 1), (-5, -5), 'axes fraction', 'offset points', va='top', ha='right')
     for l in ax2.get_yticklabels():
@@ -284,14 +285,14 @@ def plot_veldrop_vs_sm(combine=False):
         fig1.savefig(SAVEFIG)
         fig2.savefig(SAVEFIG2)
 
-    plt.show()
+    #plt.show()
 
 
 
-VELDROP_VS_SM = '/home/richter/Results/IPOC/veldrop_vs_groundmotion_%s.txt'
+VELDROP_VS_SM = '/home/richter/gfz/Results/IPOC/veldrop_vs_groundmotion_%s.txt'
 GM_TOCO = '/home/richter/Results/IPOC/maxima_Toco.yaml'
-SAVEFIG = '/home/richter/Results/IPOC/veldrop_vs_groundmotion.pdf'
-SAVEFIG2 = '/home/richter/Results/IPOC/veldrop_vs_groundvel.pdf'
+SAVEFIG = '/home/richter/gfz/Results/IPOC/veldrop_vs_groundmotion_corrected.pdf'
+SAVEFIG2 = '/home/richter/gfz/Results/IPOC/veldrop_vs_groundvel_corrected.pdf'
 SAVEFIG3 = '/home/richter/Results/IPOC/veldrop_vs_gm_ds.pdf'
 
 #calc_strong_motion()
