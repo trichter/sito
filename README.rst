@@ -1,6 +1,6 @@
 **sito** - Scripts for receiver function analysis and ambient noise cross-correlation - based on ObsPy
 
-| **copyright**: 2010-2015 Tom Eulenfeld (tom.eulenfeld@gmail.com)
+| **author**: Tom Eulenfeld
 | **license**: MIT license
 |
 
