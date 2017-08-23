@@ -15,8 +15,9 @@ Richter, T. (2014), Temporal Variations of Crustal Properties in Northern Chile 
 dissertation, FU Berlin. `pdf2 <http://www.diss.fu-berlin.de/diss/servlets/MCRFileNodeServlet/FUDISS_derivate_000000014929/dissertation_richter.pdf>`_
 
 
-A lot of alternative Python packages for ambient noise cross-correlation exist.
 I refactored the receiver function functionality in a separate repository, see `rf <https://github.com/trichter/rf>`_.
+Some of the ambient noise correlation code is re-used in the `yam <https://github.com/trichter/yam>`_ package.
+Alternative Python packages for ambient noise correlation exist.
 
 Required:
     - python 2.7
